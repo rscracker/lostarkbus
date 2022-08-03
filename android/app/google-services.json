@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "149961563735",
+    "project_id": "lostarkbus",
+    "storage_bucket": "lostarkbus.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:149961563735:android:f3957fd2ae0f67b5e68d12",
+        "android_client_info": {
+          "package_name": "com.rsc.lostarkbus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "149961563735-7ce1i16e1191nnref3m6eol9ue8jmqp0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJhSSsdXQBYFaaGssWGJDf79AIGswWAp0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "149961563735-7ce1i16e1191nnref3m6eol9ue8jmqp0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
