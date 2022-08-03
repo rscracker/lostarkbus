@@ -51,7 +51,7 @@ class _BusDetailState extends State<BusDetail> {
     var column1 = <Padding>[];
     var column2 = <Padding>[];
 
-    for(int i = 0; i < 2; i++){
+    for(int i = 0; i < ((widget.bus['driverList'].length >= 2) ? 2 : widget.bus['driverList'].length) ; i++){
       column1.add(box(widget.bus['driverList'][i]['server'], widget.bus['driverList'][i]['nick']));
     }
     if(widget.bus['driverList'].length > 2){
