@@ -88,6 +88,16 @@ class DatabaseService {
     }
   }
 
+  addTrade(Map<String, dynamic> character, Map<String, dynamic> form) async{
+    String id;
+    await tradeCollection.add({}).then((value){
+      id = value.id;
+    });
+    form["docId"] = id;
+    form['buy'] = 0;
+    await tradeCollection.doc(id).set(form);
+  }
+
   registerBus(BusModel busForm) async{
     String id;
     await busCollection.add({}).then((e) => id = e.id);
@@ -100,18 +110,56 @@ class DatabaseService {
     await busCollection.doc(docId).update({"passengerList" : FieldValue.arrayUnion([character])});
   }
 
+  participationMap(String docId, Map<String,dynamic> character) async{
+    await mapCollection.doc(docId).update({"participation" : FieldValue.arrayUnion([character])});
+  }
+
+  addMap(Map<String, dynamic> character, String type, List loc, int time) async{
+    Map<String, dynamic> mapData = {
+      "docId" : "",
+      "uploader" : character,
+      "type" : type,
+      "loc" : loc,
+      "time" : time,
+      "participation" : [character],
+    };
+    String id;
+    await mapCollection.add({}).then((value){
+      id = value.id;
+    });
+    mapData["docId"] = id;
+    await mapCollection.doc(id).set(mapData);
+  }
+
   Stream<QuerySnapshot> getmyParty(){
     if(_mainController.characterList.isNotEmpty)
       return busCollection.where("passengerList" , arrayContainsAny: _mainController.characterList).snapshots();
     return null;
   }
 
-  Stream<QuerySnapshot> getBusData(){
-    return busCollection.snapshots();
+  Stream<QuerySnapshot> getBusData(String server, {String type, String sort}){
+    if(server == "전섭"){
+      if(type != null){
+        return busCollection.orderBy('time', descending: false).where("busName", isEqualTo: type).snapshots();
+      }
+      return busCollection.orderBy("time", descending: false).snapshots();
+    } else {
+      if(type != null){
+        return busCollection.orderBy('time', descending: false).where("server", arrayContains: server).where("busName", isEqualTo: type).snapshots();
+      }
+      return busCollection.orderBy("time", descending: false).where("server", arrayContains: server).snapshots();
+    }
   }
 
   Stream<DocumentSnapshot> getBusDetail(String uid){
     return busCollection.doc(uid).snapshots();
   }
 
+  Stream<QuerySnapshot> getMapData(){
+    return mapCollection.snapshots();
+  }
+
+  Stream<QuerySnapshot> getTradeData(){
+    return tradeCollection.snapshots();
+  }
 }

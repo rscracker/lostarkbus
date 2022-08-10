@@ -9,7 +9,7 @@ class BusController extends GetxController{
   RxList server = [].obs;
   RxString boss = "미정".obs;
   RxList price1 = [].obs;
-  RxList price2 = [].obs;
+  RxInt price2 = 0.obs;
   RxString errorMessage = "".obs;
   RxInt time = 0.obs;
   //RxMap<String, dynamic> bus = {}.obs;
@@ -18,6 +18,7 @@ class BusController extends GetxController{
   void onInit() {
     this.busForm = BusModel.initBusForm();
     numdriver.value = 1;
+    price2.value = 0;
     //this.bus = BusModel.initBusForm().toJson();
     super.onInit();
   }
@@ -33,6 +34,9 @@ class BusController extends GetxController{
     this.busForm.time = time.value;
     this.busForm.price1.assignAll(price1);
     this.busForm.busName = boss.value;
+    if(price2.value != 0){
+      this.busForm.price2.assign(price2.value);
+    }
   }
 
   // registerCharacter(Map<String, dynamic> character) async{

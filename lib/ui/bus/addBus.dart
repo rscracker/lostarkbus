@@ -11,6 +11,7 @@ import 'package:lostarkbus/ui/dialog/serverSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/typeSelDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:lostarkbus/util/lostarkList.dart';
+import 'package:lostarkbus/widget/flushbar.dart';
 
 class AddBus extends StatefulWidget {
   @override
@@ -41,10 +42,15 @@ class _AddBusState extends State<AddBus> {
 
   //FocusNode myFocus;
 
+  bool numCheck = true;
+  bool timeError = false;
+  bool bossCheck = false;
+  bool priceCheck = false;
+
 
   @override
   void initState() {
-    priceController.text = "0";
+    priceController.text = "";
     hourController.text = "";
     minuteController.text = "";
     _busController.price1.assignAll([{_busController.server[0] : 0}]);
@@ -214,7 +220,7 @@ class _AddBusState extends State<AddBus> {
                 child: Container(
                   //color: Colors.blue,
                   child: Obx(() => Center(
-                      child: Text(_busController.server.isNotEmpty ? _busController.server.toString().replaceAll("[", "").replaceAll("]", "") : "전섭",
+                      child: Text(_busController.server.length != LostArkList.serverList.length ? _busController.server.toString().replaceAll("[", "").replaceAll("]", "") : "전섭",
                           style: TextStyle(
                             color: AppColor.mainColor5,
                             fontSize: 15,
@@ -266,6 +272,7 @@ class _AddBusState extends State<AddBus> {
                   await Get.dialog(BaseSelectDialog(LostArkList.type)).then((e){
                       if(e != null){
                         _busController.boss.value = e;
+                        bossCheck = true;
                       }
                   });
                 },
@@ -411,7 +418,7 @@ class _AddBusState extends State<AddBus> {
       padding: const EdgeInsets.only(top: 15.0, left: 15),
       child: Container(
         height: 60 * (_busController.price1.length == 0 ? 1 : _busController.price1.length).toDouble(),
-        width: 250,
+        width: (LostArkList.specificType.contains(_busController.boss.value)) ? 250 : 150,
         decoration: BoxDecoration(
           color: AppColor.mainColor4,
           borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -431,48 +438,96 @@ class _AddBusState extends State<AddBus> {
                 )),
                 width: 50,
               ),
-              (_busController.price1.length <= 1) ?
+              (_busController.price1.length == 1 || _busController.price1.length == 0) ?
               Obx(() => GestureDetector(
                 onTap: () => (_busController.numdriver.value == 1 || _busController.price1.length == 0) ? null : Get.dialog(priceOptionDialog()) ,
-                child: SizedBox(
-                  width: 160,
-                  child: Form(
-                      key: priceKey,
-                      child: TextFormField(
-                        enabled: _busController.numdriver.value == 1 || _busController.server.length == 0,
-                        maxLength: 6,
-                        keyboardType: TextInputType.number,
-                        style: TextStyle(
-                          color: Colors.white70
-                        ),
-                        onChanged: (text){
-                          if(text == ""){
-                            text = "0";
-                          }
-                          _busController.price1.assignAll([{(_busController.server.length != 0 ? _busController.myCharacter['server'] : "전섭") : int.parse(text)}]);
-                        },
-                        textAlign: TextAlign.center,
-                        cursorColor: AppColor.mainColor5,
-                        controller: priceController,
-                        decoration: InputDecoration(
-                          hintText: "0",
-                          counterText: "",
-                          disabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(color: Colors.transparent)
-                          ),
-                          focusColor: AppColor.mainColor,
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(color: Colors.transparent)
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(color: Colors.transparent)
-                          ),
-                        ),
-                      )
-                  ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 75,
+                      child: Form(
+                          key: priceKey,
+                          child: TextFormField(
+                            enabled: _busController.numdriver.value == 1 || _busController.server.length == LostArkList.serverList.length,
+                            maxLength: 6,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(
+                              color: Colors.white70
+                            ),
+                            onChanged: (text){
+                              if(text == ""){
+                                text = "0";
+                              }
+                              _busController.price1.assignAll([{(_busController.server.length != LostArkList.serverList.length ? _busController.myCharacter['server'] : "전섭") : int.parse(text)}]);
+                            },
+                            textAlign: TextAlign.center,
+                            cursorColor: AppColor.mainColor5,
+                            controller: priceController,
+                            decoration: InputDecoration(
+                              hintText: "0",
+                              counterText: "",
+                              disabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(color: Colors.transparent)
+                              ),
+                              focusColor: AppColor.mainColor,
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(color: Colors.transparent)
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(color: Colors.transparent)
+                              ),
+                            ),
+                          )
+                      ),
+                    ),
+                    Text(LostArkList.specificType.contains(_busController.boss.value) ? "/" : "",
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    SizedBox(
+                      width: LostArkList.specificType.contains(_busController.boss.value) ? 75 : 0,
+                      child: Form(
+                          key: price2Key,
+                          child: TextFormField(
+                            enabled: _busController.numdriver.value == 1 || _busController.server.length == LostArkList.serverList.length,
+                            maxLength: 6,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(
+                                color: Colors.white70
+                            ),
+                            onChanged: (text){
+                              if(text == "" || text == "자율"){
+                                text = "0";
+                              }
+                              _busController.price2.value = int.parse(text);
+                            },
+                            textAlign: TextAlign.center,
+                            cursorColor: AppColor.mainColor5,
+                            controller: price2Controller,
+                            decoration: InputDecoration(
+                              hintText: "자율",
+                              counterText: "",
+                              disabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(color: Colors.transparent)
+                              ),
+                              focusColor: AppColor.mainColor,
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(color: Colors.transparent)
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(color: Colors.transparent)
+                              ),
+                            ),
+                          )
+                      ),
+                    ),
+                  ],
+
                 ),
               )) : Obx( () => price2()),
             ],
@@ -493,8 +548,14 @@ class _AddBusState extends State<AddBus> {
         ));
       });
     }
+    if(_busController.price2 != 0){
+      column.add(Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Text("독식 : ${_busController.price2.value.toString()}g", style: TextStyle(color: AppColor.dark_pink),),
+      ));
+    }
     return Container(
-      height: 60 * _busController.price1.length.toDouble(),
+      height: 60 * (_busController.price1.length + ((_busController.price2.value != 0) ? 1 : 0)).toDouble(),
       width: 150,
       decoration: BoxDecoration(
         color: AppColor.mainColor4,
@@ -522,6 +583,10 @@ class _AddBusState extends State<AddBus> {
         decoration: BoxDecoration(
           color: AppColor.mainColor4,
           borderRadius: BorderRadius.all(Radius.circular(8.0)),
+          border: Border.all(
+            color: (!timeError) ? Colors.transparent : Colors.redAccent,
+            width: 1,
+          )
         ),
         child: Padding(
           padding: const EdgeInsets.only(left: 12.0),
@@ -546,8 +611,26 @@ class _AddBusState extends State<AddBus> {
                           color: Colors.white70
                       ),
                       onChanged: (text){
-                        _busController.time += int.parse(text) * 100;
+                        _busController.time += int.parse((text != "") ? text : "0") * 100;
+                        if(int.parse((text != "") ? text : "0") > 24){
+                          CustomedFlushBar(context, "24이하로 입력해주세요");
+                          setState(() {
+                            timeError = true;
+                          });
+                        } else {
+                          setState(() {
+                            timeError = false;
+                          });
+                        }
                       },
+                      // validator: (value){
+                      //   if(int.parse(value) > 24){
+                      //     return "24이하로 입력해주세요";
+                      //   } else{
+                      //     return null;
+                      //   }
+                      // },
+                      keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
                       cursorColor: AppColor.mainColor5,
                       controller: hourController,
@@ -581,8 +664,19 @@ class _AddBusState extends State<AddBus> {
                           color: Colors.white70
                       ),
                       onChanged: (text){
-                        _busController.time += int.parse(text);
+                        _busController.time += int.parse((text != "") ? text : "0");
+                        if(int.parse((text != "") ? text : "0") > 60){
+                          CustomedFlushBar(context, "60이하로 입력해주세요");
+                          setState(() {
+                            timeError = true;
+                          });
+                        } else {
+                          setState(() {
+                            timeError = false;
+                          });
+                        }
                       },
+                      keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
                       cursorColor: AppColor.mainColor5,
                       controller: minuteController,
@@ -615,13 +709,13 @@ class _AddBusState extends State<AddBus> {
 
   Widget registerButton() {
     return GestureDetector(
-      onTap: () async {
+      onTap: (checkValidate()) ? () async {
         _busController.updateBusForm();
         _busController.busForm.uploader = _user.uid;
         await DatabaseService.instance.registerBus(_busController.busForm);
         _busController.dispose();
         Get.back();
-      },
+      } : () => CustomedFlushBar(context, "모두 입력해 주세요"),
       child: Container(
         decoration: BoxDecoration(color: Colors.blueGrey),
         height: 60,
@@ -713,13 +807,13 @@ class _AddBusState extends State<AddBus> {
                     onTap: (){
                       if(!_busController.driverList.contains(_mainController.favoriteList[index]))
                         if(_busController.driverList.length >= _busController.numdriver.value){
-                          _busController.errorMessage.value = "기사수를 더이상 추가할 수 없습니다";
+                          _busController.errorMessage.value = "기사를 더이상 추가할 수 없습니다";
                         } else {
                           _busController.driverList.add(_mainController.favoriteList[index]);
                         }
                       else
                         _busController.driverList.remove(_mainController.favoriteList[index]);
-                      if(_busController.server.isNotEmpty){
+                      if(_busController.server.length != LostArkList.serverList.length){
                         List driverServer = [];
                         _busController.driverList.forEach((e) {
                           if(!driverServer.contains(e['server']))
@@ -727,6 +821,11 @@ class _AddBusState extends State<AddBus> {
                         });
                         _busController.server.assignAll(driverServer);
                       }
+                      // if(_busController.numdriver == _busController.driverList.length){
+                      //   numCheck = true;
+                      // } else {
+                      //   numCheck = false;
+                      // }
                     },
                     child: Obx(() => Container(
                       decoration: BoxDecoration(
@@ -798,7 +897,7 @@ class _AddBusState extends State<AddBus> {
         children: [
           GestureDetector(
             onTap: () {
-              _busController.server.assignAll([]);
+              _busController.server.assignAll(LostArkList.serverList);
               _busController.price1.assignAll([]);
               Get.back();
             },
@@ -816,6 +915,7 @@ class _AddBusState extends State<AddBus> {
           SizedBox(height: 10,),
           GestureDetector(
             onTap: (){
+              _busController.server.assignAll([]);
               _busController.driverList.forEach((e) {
                 if(!_busController.server.contains(e['server']))
                   _busController.server.add(e['server']);
@@ -888,55 +988,55 @@ class _AddBusState extends State<AddBus> {
   Widget priceSetDialog(int type){
     var textcontroller = <TextEditingController>[];
     var inputForm = <Padding>[];
-    if(_busController.server.length == 0){
-      textcontroller.add(new TextEditingController());
-      inputForm.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColor.mainColor4,
-                borderRadius: BorderRadius.all(Radius.circular(8.0)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(_busController.server[0],
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  Container(
-                    width: 150,
-                    child: TextField(
-                      decoration : InputDecoration(
-                        disabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide(color: Colors.transparent)
-                        ),
-                        focusColor: AppColor.mainColor,
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide(color: Colors.transparent)
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide(color: Colors.transparent)
-                        ),
-                      ),
-                      keyboardType: TextInputType.number,
-                      cursorColor: Colors.white70,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.white70
-                      ),
-                      controller: textcontroller[0],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-      );
-    }
+    // if(_busController.server.length == LostArkList.serverList.length){
+    //   textcontroller.add(new TextEditingController());
+    //   inputForm.add(
+    //       Padding(
+    //         padding: const EdgeInsets.symmetric(vertical: 5.0),
+    //         child: Container(
+    //           decoration: BoxDecoration(
+    //             color: AppColor.mainColor4,
+    //             borderRadius: BorderRadius.all(Radius.circular(8.0)),
+    //           ),
+    //           child: Row(
+    //             mainAxisSize: MainAxisSize.min,
+    //             children: [
+    //               Text(_busController.server[0],
+    //                 style: TextStyle(color: Colors.white),
+    //               ),
+    //               Container(
+    //                 width: 150,
+    //                 child: TextField(
+    //                   decoration : InputDecoration(
+    //                     disabledBorder: OutlineInputBorder(
+    //                         borderRadius: BorderRadius.circular(8.0),
+    //                         borderSide: BorderSide(color: Colors.transparent)
+    //                     ),
+    //                     focusColor: AppColor.mainColor,
+    //                     enabledBorder: OutlineInputBorder(
+    //                         borderRadius: BorderRadius.circular(8.0),
+    //                         borderSide: BorderSide(color: Colors.transparent)
+    //                     ),
+    //                     focusedBorder: OutlineInputBorder(
+    //                         borderRadius: BorderRadius.circular(8.0),
+    //                         borderSide: BorderSide(color: Colors.transparent)
+    //                     ),
+    //                   ),
+    //                   keyboardType: TextInputType.number,
+    //                   cursorColor: Colors.white70,
+    //                   textAlign: TextAlign.center,
+    //                   style: TextStyle(
+    //                       color: Colors.white70
+    //                   ),
+    //                   controller: textcontroller[0],
+    //                 ),
+    //               ),
+    //             ],
+    //           ),
+    //         ),
+    //       )
+    //   );
+    // }
     for(int i = 0; i < _busController.server.length; i++){
       textcontroller.add(new TextEditingController());
       inputForm.add(Padding(
@@ -986,6 +1086,56 @@ class _AddBusState extends State<AddBus> {
         ),
       ));
     }
+    if(LostArkList.specificType.contains(_busController.boss.value)){
+      textcontroller.add(new TextEditingController());
+      inputForm.add(Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColor.mainColor4,
+            borderRadius: BorderRadius.all(Radius.circular(8.0)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                  width: 80,
+                  child: Center(child: Text("독식",
+                    style: TextStyle(color: Colors.white),
+                  ))),
+              Container(
+                width: 150,
+                child: TextField(
+                  decoration : InputDecoration(
+                    hintText: "자율",
+                    disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(color: Colors.transparent)
+                    ),
+                    focusColor: AppColor.mainColor,
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(color: Colors.transparent)
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(color: Colors.transparent)
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  cursorColor: Colors.white70,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.white70
+                  ),
+                  controller: textcontroller[textcontroller.length-1],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ));
+    }
     return AlertDialog(
       backgroundColor: AppColor.mainColor2,
       content: Column(
@@ -998,7 +1148,11 @@ class _AddBusState extends State<AddBus> {
           TextButton(child: Text("확인"), onPressed: (){
             List price1 = [];
             for(int i=0; i < textcontroller.length; i++){
-              price1.add({_busController.server[i] : textcontroller[i].text});
+              if(LostArkList.specificType.contains(_busController.boss.value) && i == textcontroller.length-1){
+                _busController.price2.value = int.parse(textcontroller[i].text);
+              } else {
+                price1.add({_busController.server[i] : textcontroller[i].text});
+              }
             }
             _busController.price1.assignAll(price1);
             Get.back();
@@ -1007,6 +1161,15 @@ class _AddBusState extends State<AddBus> {
       ),
     );
   }
+
+  bool checkValidate(){
+    bool numCheck = _busController.numdriver == _busController.driverList.length;
+    bool timeCheck = (hourController.text != "") && (minuteController.text != "");
+    bool bossCheck = _busController.boss != "미정";
+
+    return numCheck && timeCheck && bossCheck;
+  }
+
 
 
 

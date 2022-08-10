@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:lostarkbus/controller/mainController.dart';
 import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/myPage/myPage.dart';
-import 'package:lostarkbus/ui/map.dart';
+import 'package:lostarkbus/ui/map/map.dart';
 import 'package:lostarkbus/ui/bus/bus.dart';
-import 'package:lostarkbus/ui/trade.dart';
+import 'package:lostarkbus/ui/trade/trade.dart';
 import 'package:lostarkbus/util/colors.dart';
 
 class NavigationController extends GetxController {
@@ -37,7 +37,7 @@ class Navigation extends StatelessWidget {
 
   final List inactiveIcons = [Icons.favorite, Icons.group, Icons.notifications];
 
-  final List<Widget> _page = <Widget>[Bus(), Trade(), Map(), Mypage()];
+  final List<Widget> _page = <Widget>[Bus(), Trade(), MapPage(), Mypage()];
 
   GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
 

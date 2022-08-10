@@ -8,8 +8,12 @@ import 'package:lostarkbus/model/userModel.dart';
 import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/bus/addBus.dart';
 import 'package:lostarkbus/ui/bus/busDetail.dart';
+import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/busCharacterSel.dart';
 import 'package:lostarkbus/util/colors.dart';
+import 'package:lostarkbus/util/lostarkList.dart';
+import 'package:lostarkbus/util/utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Bus extends StatefulWidget {
   @override
@@ -21,6 +25,24 @@ class _BusState extends State<Bus> {
   MainController _mainController = Get.find();
 
   UserModel get _user => _mainController.user.value;
+
+  String server_filter = "전섭";
+  String type_filter = "버스 종류";
+  String sort_filter = "시간순";
+
+  @override
+  void initState(){
+    super.initState();
+    (() async{
+      final prefs = await SharedPreferences.getInstance();
+      print("serverfilter ${prefs.getString('serverFilter')}");
+      setState(() {
+        server_filter = prefs.getString('serverFilter') ?? "전섭";
+        type_filter = prefs.getString('typeFilter') ?? "버스 종류";
+        sort_filter = prefs.getString('sortFilter') ?? "시간순";
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +75,7 @@ class _BusState extends State<Bus> {
           //   style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold),
           // ),
           TextButton(
-            onPressed: () => Get.dialog(BusCharacterSelDialog()),
+            onPressed: () => Get.dialog(BusCharacterSelDialog()), //Todo => characterSelDialog로 바꾸기
             child: Text("등록",
               style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
             ),
@@ -70,25 +92,58 @@ class _BusState extends State<Bus> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            filter("서버"),
-            filter("버스 종류"),
-            filter("가격순")
+            filter(server_filter,0),
+            filter(type_filter,1),
+            filter(sort_filter,2)
           ],
         ),
       ),
     );
   }
-  Widget filter(String text) {
-    return Container(
-      height: 50,
-      width: Get.width / 4,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.all(
-            Radius.circular(5.0) // POINT
+  Widget filter(String text, int type) {
+    return GestureDetector(
+      onTap: (type == 0) ? () async{
+        await Get.dialog(BaseSelectDialog(List.from(["전섭"])..addAll(LostArkList.serverList))).then((e){
+          if(e!=null){
+            setState(() {
+              server_filter = e;
+            });
+          }
+        });
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('serverFilter', server_filter);
+      } : (type ==1) ? () async{
+        await Get.dialog(BaseSelectDialog(List.from(["전체"])..addAll(LostArkList.type))).then((e){
+          if(e!=null){
+            setState(() {
+              type_filter = e;
+            });
+          }
+        });
+      } : () async{
+        await Get.dialog(BaseSelectDialog(['시간순', '가격순'])).then((e){
+          if(e!=null){
+            setState(() {
+              sort_filter = e;
+            });
+          }
+        });
+      },
+      child: Container(
+        height: 50,
+        width: Get.width / 4,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.white70,
+            width: 1
+          ),
+          borderRadius: BorderRadius.all(
+              Radius.circular(10.0) // POINT
+          ),
+          color: AppColor.mainColor2,
         ),
-        color: AppColor.mainColor2,
+        child: Center(child: Text(text, style: TextStyle(color: Colors.white, fontSize: 13, overflow: TextOverflow.ellipsis),)),
       ),
-      child: Center(child: Text(text, style: TextStyle(color: Colors.white, fontSize: 13),)),
     );
   }
 
@@ -96,57 +151,25 @@ class _BusState extends State<Bus> {
     return Flexible(
       fit: FlexFit.tight,
       child: StreamBuilder<QuerySnapshot>(
-        stream: DatabaseService.instance.getBusData(),
+                stream: DatabaseService.instance.getBusData(server_filter, type: (type_filter == "전체" || type_filter == "버스 종류") ? null : type_filter) ,
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           List busList = [];
+          print("type : ${type_filter}");
           if(snapshot.connectionState == ConnectionState.waiting)
             return Center(child: CircularProgressIndicator(),);
-          snapshot.data.docs.forEach((e) {
-            busList.add(e.data());
-          });
-          if(busList.length == 0)
+          if(!snapshot.hasData)
             return Container(child: Center(child: Text("버스가 없습니다")),);
           return Container(
             child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: busList.length,
+                itemCount: snapshot.data.docs.length,
                 itemBuilder: (BuildContext context, int index){
                   return GestureDetector(
-                      onTap: () => Get.dialog(participationDialog(busList[index]["docId"])),
-                      child: busTile(busList[index]));
+                      onTap: () => Get.dialog(participationDialog(snapshot.data.docs[index]["docId"])),
+                      child: busTile(snapshot.data.docs[index].data()));
                 }),
           );
         }
-      ),
-    );
-  }
-
-  Widget tile() {
-    return ListTile(
-      shape: RoundedRectangleBorder(
-        //side: BorderSide(color: AppColor.mainColor3, width: 1),
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      //tileColor: AppColor.mainColor2,
-      //tileColor: Colors.white,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(top : 8.0, bottom: 5.0),
-            child: Text("발탄(하드)", style: TextStyle(color: AppColor.mainColor5, fontSize: 20, fontWeight: FontWeight.bold) ,),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5.0),
-            child: Text("실리안", style: TextStyle(color: AppColor.mainColor5, fontSize: 15,)),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5.0),
-            child: Text("15:00",style: TextStyle(color: AppColor.mainColor5, fontSize: 15,)),
-          ),
-          Text("참여 2/5 뼈독 0/1", style: TextStyle(color: AppColor.mainColor5, fontSize: 15,)),
-          SizedBox(height: 5,)
-        ],
       ),
     );
   }
@@ -176,10 +199,16 @@ class _BusState extends State<Bus> {
       bus["price1"][i].forEach((key, value){
         price.add(Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Text(value != 0 ? "$key : ${value}g" : "무료", style: TextStyle(color: AppColor.yellow, fontSize: 13,)),
+          child: Text(value != 0 ? "$key : ${value}g" : "무료", style: TextStyle(color: AppColor.yellow, fontSize: 13,), overflow: TextOverflow.clip),
         ));
       });
 
+    }
+    if(bus["price2"].length != 0){
+      price.add(Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text("독식 : ${bus["price2"][0]}g", style: TextStyle(color: AppColor.dark_pink, fontSize: 13,), overflow: TextOverflow.ellipsis,),
+      ));
     }
     // driverList.forEach((e) {
     //   return column1.add(new Text(e['nick']));
@@ -207,6 +236,10 @@ class _BusState extends State<Bus> {
         child: Container(
           //height: 120,
           decoration: BoxDecoration(
+            // border: Border.all(
+            //   color: Colors.white,
+            //   width: 1+
+            // ),
             borderRadius: BorderRadius.all(
                 Radius.circular(5.0)
             ),
@@ -218,24 +251,28 @@ class _BusState extends State<Bus> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 tileTop(bus["busName"], bus["server"], bus["time"]),
+                Padding(
+                  padding: const EdgeInsets.only(top : 8.0),
+                  child: Container(height: 1, color: Colors.white70,),
+                ),
                 Row(
                   children: [
                     SizedBox(
-                      width: 120,
+                      width: 140,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: price,
                       ),
                     ),
-                    Flexible(
-                        fit: FlexFit.tight,
-                        child: SizedBox()),
+                    // Flexible(
+                    //     fit: FlexFit.tight,
+                    //     child: SizedBox()),
                     Padding(
-                      padding: const EdgeInsets.only(top : 10.0),
+                      padding: const EdgeInsets.only(top : 2.0),
                       child: Row(
                         children: [
                           SizedBox(
-                            width: 100,
+                            width: (Get.width - 190) / 2,
                             height: 100,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +281,7 @@ class _BusState extends State<Bus> {
                             ),
                           ),
                           SizedBox(
-                            width: 100,
+                            width: (Get.width - 190) / 2,
                             height: 100,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,25 +374,38 @@ class _BusState extends State<Bus> {
 
   Widget tileTop(String boss, List server, int time){
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top : 8.0),
-          child: Text(boss, style: TextStyle(color: AppColor.mainColor5, fontSize: 18, fontWeight: FontWeight.bold) ,),
-        ),
-        Container(
-          width: 130,
+        SizedBox(
+          width: 200,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
-            child: Center(
-              child: Text((server.length != 0) ? server.toString().replaceAll("[", "").replaceAll("]", "") : "전섭"
-                  , style: TextStyle(color: AppColor.mainColor5, fontSize: 16, overflow: TextOverflow.ellipsis)),
-            ),
+            padding: const EdgeInsets.only(left : 8.0 , top : 8.0),
+            child: Text(boss, style: TextStyle(color: AppColor.mainColor5 , fontSize: 18, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis,),
+          ),
+        ),
+        // Container(
+        //   width: 150,
+        //   child: Padding(
+        //     padding: const EdgeInsets.fromLTRB(10,10,8.0,0),
+        //     child: Text((server.length != 0) ? server.toString().replaceAll("[", "").replaceAll("]", "") : "전섭"
+        //         , style: TextStyle(color: AppColor.mainColor5, fontSize: 16, overflow: TextOverflow.ellipsis)),
+        //   ),
+        // ),
+        Flexible(
+            fit: FlexFit.tight,
+            child: SizedBox()),
+        Padding(
+          padding: const EdgeInsets.only(top: 10.0),
+          child: Icon(
+            Icons.access_time_rounded,
+            color: Colors.white70,
+            size: 17,
           ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
-          child: Text("${(time~/100).toString()} : ${(time - (time~/100)*100).toString()}",style: TextStyle(color: AppColor.mainColor5, fontSize: 16,)),
+          child: Text(Utils.timeinvert(time),style: TextStyle(color: AppColor.mainColor5, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ],
     );

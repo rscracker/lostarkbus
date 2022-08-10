@@ -31,7 +31,9 @@ class AppColor {
 
   static Color blue4 = const Color(0xff8899a6);
 
-  static Color blue = const Color(0xff0784b5);
+  static Color blue = const Color(0xff1c3ffd);
+
+  static Color lightBlue = const Color(0xff0288d1);
 
   static Color dark_teal = const Color(0xff03DAC5);
 
@@ -39,11 +41,11 @@ class AppColor {
 
   static Color dark_pink_accent = const Color(0xffFF0266);
 
-  static Color yellow = const Color(0xff9b870c);
+  static Color yellow = const Color(0xffdba507);
 
   static Color lightYellow = const Color(0xfff5d10d);
 
-  static Color purple = const Color(0xffbe52f2);
+  static Color purple = const Color(0xff9c27b0);
 
   static Color purple2 = const Color(0xffdba5f5);
 

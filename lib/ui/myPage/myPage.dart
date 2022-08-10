@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,10 +7,13 @@ import 'package:lostarkbus/model/userModel.dart';
 import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/dialog/addcharacterDialog.dart';
 import 'package:lostarkbus/ui/myPage/addCharacter.dart';
+import 'package:lostarkbus/ui/myPage/test.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:lostarkbus/ui/dialog/lostarkList.dart';
 import 'package:smart_select/smart_select.dart';
+import 'package:http/http.dart' as http;
+import 'package:jsonml/html2jsonml.dart';
 
 class Mypage extends StatefulWidget {
   @override
@@ -26,10 +30,62 @@ class _MypageState extends State<Mypage> {
     return SafeArea(
       child: Column(
         children: <Widget>[
+          Center(child: TextButton(
+            child: Text("test"),
+            onPressed: () async {
+              String url = "https://lostark.game.onstove.com/Profile/Character/%EB%8F%99%EB%A7%89%EA%B3%A8%ED%98%B8%EB%9E%AD%EC%9D%B4";
+              var response = await http.get(url);
+              if(response.statusCode == 200){
+                //
+                // print(encodeToJsonML(utf8.decode(response.bodyBytes)));
+              }
+              String a = utf8.decode(response.bodyBytes);
+              Get.to(() => test(a.split('<main>')[1]));
+            }
+          ),),
+          searchBar(),
           myCharacter(),
           myParty(),
           Obx(() => favoriteList()),
         ],
+      ),
+    );
+  }
+
+  Widget searchBar() {
+    return Padding(
+      padding: const EdgeInsets.only(top : 8.0),
+      child: Center(
+        child: Container(
+          height: 50,
+          width: 250,
+          decoration: BoxDecoration(
+            color: AppColor.mainColor3,
+            borderRadius: BorderRadius.all(
+                Radius.circular(8.0)
+            ),
+          ),
+          child: TextField(
+            cursorColor: Colors.white70
+            ,
+            decoration: InputDecoration(
+              suffixIcon: Icon(Icons.search_outlined, color: Colors.white70,),
+              disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide(color: Colors.transparent)
+              ),
+              focusColor: AppColor.mainColor,
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide(color: Colors.transparent)
+              ),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide(color: Colors.transparent)
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

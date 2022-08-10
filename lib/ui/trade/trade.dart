@@ -1,8 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:get/get.dart';
 
-import 'dialog/busCharacterSel.dart';
+import '../dialog/busCharacterSel.dart';
+import 'addTradeDialog.dart';
 
 class Trade extends StatefulWidget {
 
@@ -41,7 +44,7 @@ class _TradeState extends State<Trade> {
           //   style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold),
           // ),
           TextButton(
-            onPressed: () => Get.dialog(BusCharacterSelDialog()),
+            onPressed: () => Get.dialog(AddTrade()),
             child: Text("등록",
               style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
             ),
@@ -83,17 +86,32 @@ class _TradeState extends State<Trade> {
   Widget tradeList(){
     return Flexible(
       fit: FlexFit.tight,
-      child: ListView.builder(
-          itemCount: 30,
-          itemBuilder: (context, index){
-            return tradeContainer();
-          }),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: DatabaseService.instance.getTradeData(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if(snapshot.connectionState == ConnectionState.waiting)
+            return Center(child: CircularProgressIndicator(),);
+          if(snapshot.hasData)
+            return GridView.builder(
+              itemCount: snapshot.data.size,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 3,
+                crossAxisSpacing: 5,
+              ),
+              itemBuilder: (context, int index){
+                if(snapshot.data.docs[index] != null)
+                  return tradeContainer(snapshot.data.docs[index].data());
+              },
+            );
+        }
+      ),
     );
   }
 
-  Widget tradeContainer(){
+  Widget tradeContainer(Map<String, dynamic> trade){
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
       child: Container(
         decoration: BoxDecoration(
           color: AppColor.mainColor4,
@@ -105,11 +123,28 @@ class _TradeState extends State<Trade> {
           //   width: 1
           // ),
         ),
-        height: 80,
-        child: Row(
-
+        width: 100,
+        height: 100,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Text(
+                trade['uploader'] != null ? trade['uploader']['server'] : "",
+                style: TextStyle(color: AppColor.lightBlue, fontWeight: FontWeight.bold, ),
+            ),
+            customedText(trade['item']  ?? ""),
+            Text(
+              trade['price'].toString() + "g"  ?? "",
+              style: TextStyle(color: AppColor.yellow, ),
+            ),
+            customedText(trade['buy'].toString() + " / " + trade['quantity'].toString()  ?? "" ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget customedText(String text, {int colType}){
+    return Text(text, style: TextStyle(color: Colors.white70),);
   }
 }

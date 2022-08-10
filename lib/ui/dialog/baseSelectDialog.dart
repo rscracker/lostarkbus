@@ -24,30 +24,35 @@ class BaseSelectDialog extends StatefulWidget {
 class _BaseSelectDialogState extends State<BaseSelectDialog> {
   @override
   Widget build(BuildContext context) {
+    var content = <Padding>[];
+    widget.content.forEach((e) {
+      content.add(Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: InkWell(
+          onTap: () => Get.back(result: e),
+          child: Container(
+            height: 40,
+            width: 200,
+            child: Center(
+              child: Text(e,
+                style: TextStyle(
+                  color: Colors.white70,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ));
+    });
     return AlertDialog(
       backgroundColor: AppColor.mainColor2,
       //title: Center(child: Text(widget.title, style: TextStyle(color: Colors.white70),),),
       content: Container(
-        height: 300,
-        width: 300,
-        child: ListView.builder(
-            itemCount: widget.content.length,
-            itemBuilder: (context, index){
-              return InkWell(
-                onTap: () => Get.back(result: widget.content[index]),
-                child: Container(
-                  height: 40,
-                  width: 200,
-                  child: Center(
-                    child: Text(widget.content[index],
-                      style: TextStyle(
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
+        width: 200,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: content,
+        ),
       ),
     );
   }
