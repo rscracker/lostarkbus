@@ -40,7 +40,7 @@ dependencies:
   smart_select: ^4.3.2
   http : 0.12.2
   jsonml: 0.1.9
-  shared_preferences: 0.5.12
+  shared_preferences: 0.5.7
 
 dev_dependencies:
   flutter_test:
@@ -64,7 +64,6 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

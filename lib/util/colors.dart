@@ -37,9 +37,9 @@ class AppColor {
 
   static Color dark_teal = const Color(0xff03DAC5);
 
-  static Color dark_pink = const Color(0xffFF7597);
+  static Color dark_pink = const Color(0xffCF6679);
 
-  static Color dark_pink_accent = const Color(0xffFF0266);
+  static Color dark_pink_accent = const Color(0xffd86c00);
 
   static Color yellow = const Color(0xffdba507);
 

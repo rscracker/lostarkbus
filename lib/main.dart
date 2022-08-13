@@ -21,7 +21,8 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'LostArk Bus',
       theme: ThemeData(
-        scaffoldBackgroundColor: AppColor.mainColor,
+        //fontFamily: 'text',
+        scaffoldBackgroundColor: AppColor.mainColor ,
       ),
       initialBinding: BindingsBuilder(() => {
             Get.put(MainController()),

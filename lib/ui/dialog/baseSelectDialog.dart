@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BaseSelectDialog extends StatefulWidget {
 
   int width;
   int height;
   List content;
+  bool save;
+  String saveKey;
   //String title;
 
   BaseSelectDialog(
@@ -15,6 +18,8 @@ class BaseSelectDialog extends StatefulWidget {
       {
     this.width,
     this.height,
+        this.save,
+        this.saveKey,
   });
 
   @override
@@ -29,7 +34,13 @@ class _BaseSelectDialogState extends State<BaseSelectDialog> {
       content.add(Padding(
         padding: const EdgeInsets.all(8.0),
         child: InkWell(
-          onTap: () => Get.back(result: e),
+          onTap: () async{
+            Get.back(result: e);
+            if(widget.save){
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              await prefs.setString(widget.saveKey, e);
+            }
+          },
           child: Container(
             height: 40,
             width: 200,

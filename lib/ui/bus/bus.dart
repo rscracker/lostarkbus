@@ -33,15 +33,15 @@ class _BusState extends State<Bus> {
   @override
   void initState(){
     super.initState();
-    (() async{
+    getFilter();
+  }
+
+  void getFilter() async{
       final prefs = await SharedPreferences.getInstance();
-      print("serverfilter ${prefs.getString('serverFilter')}");
-      setState(() {
-        server_filter = prefs.getString('serverFilter') ?? "전섭";
-        type_filter = prefs.getString('typeFilter') ?? "버스 종류";
-        sort_filter = prefs.getString('sortFilter') ?? "시간순";
-      });
-    });
+      server_filter = prefs.getString('serverFilter') ?? "전섭";
+      type_filter = prefs.getString('typeFilter')?? "버스 종류";
+      sort_filter = prefs.getString('sortFilter')?? "시간순";
+      setState(() {});
   }
 
   @override
@@ -103,17 +103,15 @@ class _BusState extends State<Bus> {
   Widget filter(String text, int type) {
     return GestureDetector(
       onTap: (type == 0) ? () async{
-        await Get.dialog(BaseSelectDialog(List.from(["전섭"])..addAll(LostArkList.serverList))).then((e){
+        await Get.dialog(BaseSelectDialog(List.from(["전섭"])..addAll(LostArkList.serverList), save: true, saveKey: "serverFilter",)).then((e){
           if(e!=null){
             setState(() {
               server_filter = e;
             });
           }
         });
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('serverFilter', server_filter);
       } : (type ==1) ? () async{
-        await Get.dialog(BaseSelectDialog(List.from(["전체"])..addAll(LostArkList.type))).then((e){
+        await Get.dialog(BaseSelectDialog(List.from(["전체"])..addAll(LostArkList.type),save: true, saveKey: "typeFilter", )).then((e){
           if(e!=null){
             setState(() {
               type_filter = e;
@@ -121,7 +119,7 @@ class _BusState extends State<Bus> {
           }
         });
       } : () async{
-        await Get.dialog(BaseSelectDialog(['시간순', '가격순'])).then((e){
+        await Get.dialog(BaseSelectDialog(['시간순', '가격순'], save: true, saveKey: "sortFilter",)).then((e){
           if(e!=null){
             setState(() {
               sort_filter = e;
@@ -154,7 +152,6 @@ class _BusState extends State<Bus> {
                 stream: DatabaseService.instance.getBusData(server_filter, type: (type_filter == "전체" || type_filter == "버스 종류") ? null : type_filter) ,
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           List busList = [];
-          print("type : ${type_filter}");
           if(snapshot.connectionState == ConnectionState.waiting)
             return Center(child: CircularProgressIndicator(),);
           if(!snapshot.hasData)
@@ -243,7 +240,7 @@ class _BusState extends State<Bus> {
             borderRadius: BorderRadius.all(
                 Radius.circular(5.0)
             ),
-            color: AppColor.mainColor2,
+            color: AppColor.mainColor4,
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
