@@ -14,8 +14,8 @@ class AddMap extends StatefulWidget {
 class _AddMapState extends State<AddMap> {
 
   Map<String, dynamic> character =
-  {"nick" : "admin",
-    "server" : "실리안",
+  {"nick" : "캐릭터 선택",
+    "server" : "서버",
   };
   String mapType = "희귀";
   String loc1 = "파푸니카";
@@ -255,7 +255,7 @@ class _AddMapState extends State<AddMap> {
       padding: const EdgeInsets.only(top: 10.0),
       child: GestureDetector(
         onTap: () async{
-          await DatabaseService.instance.addMap(character, mapType, [loc1, loc2], int.parse(hour) * 100 + int.parse(minute));
+          await DatabaseService.instance.addMap(character, mapType, loc1, loc2, int.parse(hour) * 100 + int.parse(minute));
           Get.back();
         },
         child: Container(

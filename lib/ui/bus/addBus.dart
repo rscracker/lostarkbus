@@ -302,7 +302,7 @@ class _AddBusState extends State<AddBus> {
         children: [
           Container(
             height: 60,
-            width: 200,
+            width: 150,
             decoration: BoxDecoration(
               color: AppColor.mainColor4,
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -334,7 +334,7 @@ class _AddBusState extends State<AddBus> {
                                       color: AppColor.mainColor5,
                                       fontSize: 15,
                                     ))),
-                        width: 120,
+                        width: 80,
                         height: 60,
                       )),
                 ],
@@ -440,7 +440,7 @@ class _AddBusState extends State<AddBus> {
               ),
               (_busController.price1.length == 1 || _busController.price1.length == 0) ?
               Obx(() => GestureDetector(
-                onTap: () => (_busController.numdriver.value == 1 || _busController.price1.length == 0) ? null : Get.dialog(priceOptionDialog()) ,
+                onTap: () => (_busController.numdriver.value == 1 || _busController.price1.length == 0) ? null : Get.dialog(priceSetDialog(0)) ,
                 child: Row(
                   children: [
                     SizedBox(
@@ -987,58 +987,61 @@ class _AddBusState extends State<AddBus> {
 
   Widget priceSetDialog(int type){
     var textcontroller = <TextEditingController>[];
+    var numcontroller = <TextEditingController>[];
     var inputForm = <Padding>[];
-    // if(_busController.server.length == LostArkList.serverList.length){
-    //   textcontroller.add(new TextEditingController());
-    //   inputForm.add(
-    //       Padding(
-    //         padding: const EdgeInsets.symmetric(vertical: 5.0),
-    //         child: Container(
-    //           decoration: BoxDecoration(
-    //             color: AppColor.mainColor4,
-    //             borderRadius: BorderRadius.all(Radius.circular(8.0)),
-    //           ),
-    //           child: Row(
-    //             mainAxisSize: MainAxisSize.min,
-    //             children: [
-    //               Text(_busController.server[0],
+    // if(type == 0){
+    //   inputForm.add(Padding(
+    //     padding: const EdgeInsets.symmetric(vertical: 5.0),
+    //     child: Container(
+    //       decoration: BoxDecoration(
+    //         color: AppColor.mainColor4,
+    //         borderRadius: BorderRadius.all(Radius.circular(8.0)),
+    //       ),
+    //       child: Row(
+    //         mainAxisSize: MainAxisSize.min,
+    //         children: [
+    //           SizedBox(
+    //               width: 80,
+    //               child: Center(child: Text("가격",
     //                 style: TextStyle(color: Colors.white),
-    //               ),
-    //               Container(
-    //                 width: 150,
-    //                 child: TextField(
-    //                   decoration : InputDecoration(
-    //                     disabledBorder: OutlineInputBorder(
-    //                         borderRadius: BorderRadius.circular(8.0),
-    //                         borderSide: BorderSide(color: Colors.transparent)
-    //                     ),
-    //                     focusColor: AppColor.mainColor,
-    //                     enabledBorder: OutlineInputBorder(
-    //                         borderRadius: BorderRadius.circular(8.0),
-    //                         borderSide: BorderSide(color: Colors.transparent)
-    //                     ),
-    //                     focusedBorder: OutlineInputBorder(
-    //                         borderRadius: BorderRadius.circular(8.0),
-    //                         borderSide: BorderSide(color: Colors.transparent)
-    //                     ),
-    //                   ),
-    //                   keyboardType: TextInputType.number,
-    //                   cursorColor: Colors.white70,
-    //                   textAlign: TextAlign.center,
-    //                   style: TextStyle(
-    //                       color: Colors.white70
-    //                   ),
-    //                   controller: textcontroller[0],
+    //               ))),
+    //           Container(
+    //             width: 80,
+    //             child: TextField(
+    //               decoration : InputDecoration(
+    //                 disabledBorder: OutlineInputBorder(
+    //                     borderRadius: BorderRadius.circular(8.0),
+    //                     borderSide: BorderSide(color: Colors.transparent)
+    //                 ),
+    //                 focusColor: AppColor.mainColor,
+    //                 enabledBorder: OutlineInputBorder(
+    //                     borderRadius: BorderRadius.circular(8.0),
+    //                     borderSide: BorderSide(color: Colors.transparent)
+    //                 ),
+    //                 focusedBorder: OutlineInputBorder(
+    //                     borderRadius: BorderRadius.circular(8.0),
+    //                     borderSide: BorderSide(color: Colors.transparent)
     //                 ),
     //               ),
-    //             ],
+    //               keyboardType: TextInputType.number,
+    //               cursorColor: Colors.white70,
+    //               textAlign: TextAlign.center,
+    //               style: TextStyle(
+    //                   color: Colors.white70
+    //               ),
+    //               controller: textcontroller[i],
+    //             ),
     //           ),
-    //         ),
-    //       )
-    //   );
+    //         ],
+    //       ),
+    //     ),
+    //   ));
+    // } else {
+    //  
     // }
     for(int i = 0; i < _busController.server.length; i++){
       textcontroller.add(new TextEditingController());
+      numcontroller.add(new TextEditingController());
       inputForm.add(Padding(
         padding: const EdgeInsets.symmetric(vertical: 5.0),
         child: Container(
@@ -1055,9 +1058,10 @@ class _AddBusState extends State<AddBus> {
                     style: TextStyle(color: Colors.white),
                   ))),
               Container(
-                width: 150,
+                width: 70,
                 child: TextField(
                   decoration : InputDecoration(
+                    hintText: "가격",
                     disabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(color: Colors.transparent)
@@ -1081,6 +1085,35 @@ class _AddBusState extends State<AddBus> {
                   controller: textcontroller[i],
                 ),
               ),
+              Text("/", style: TextStyle(color: Colors.white70),),
+              Container(
+                width: 70,
+                child: TextField(
+                  decoration : InputDecoration(
+                    hintText: "인원",
+                    disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(color: Colors.transparent)
+                    ),
+                    focusColor: AppColor.mainColor,
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(color: Colors.transparent)
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(color: Colors.transparent)
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  cursorColor: Colors.white70,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.white70
+                  ),
+                  controller: numcontroller[i],
+                ),
+              ),
             ],
           ),
         ),
@@ -1091,6 +1124,7 @@ class _AddBusState extends State<AddBus> {
       inputForm.add(Padding(
         padding: const EdgeInsets.symmetric(vertical: 5.0),
         child: Container(
+          width: 230,
           decoration: BoxDecoration(
             color: AppColor.mainColor4,
             borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -1147,14 +1181,20 @@ class _AddBusState extends State<AddBus> {
           ),
           TextButton(child: Text("확인"), onPressed: (){
             List price1 = [];
+            List numPassenger = [];
+            for(int i=0; i < numcontroller.length; i++){
+              numPassenger.add({_busController.server[i] : [0, int.parse(numcontroller[i].text)]});
+            }
             for(int i=0; i < textcontroller.length; i++){
               if(LostArkList.specificType.contains(_busController.boss.value) && i == textcontroller.length-1){
                 _busController.price2.value = int.parse(textcontroller[i].text);
+                numPassenger.add({"독식": [0, 1]});
               } else {
                 price1.add({_busController.server[i] : textcontroller[i].text});
               }
             }
             _busController.price1.assignAll(price1);
+            _busController.numPassenger.assignAll(numPassenger);
             Get.back();
           },)
         ],
@@ -1167,7 +1207,7 @@ class _AddBusState extends State<AddBus> {
     bool timeCheck = (hourController.text != "") && (minuteController.text != "");
     bool bossCheck = _busController.boss != "미정";
 
-    return numCheck && timeCheck && bossCheck;
+    return true;
   }
 
 

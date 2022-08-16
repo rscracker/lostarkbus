@@ -225,41 +225,43 @@ class _BusDetailState extends State<BusDetail> {
   Widget box2(String text1, String text2, String text3) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: new Container(
-        height: 100,
-        width: 100,
-        decoration: BoxDecoration(
-          color: AppColor.blue2,
-          borderRadius: BorderRadius.all(Radius.circular(5.0)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              text1,
-              style: TextStyle(fontSize: 14, color: Colors.white),
-            ),
-            SizedBox(
-              height: 5,
-            ),
-            Text(
-              text2,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                  overflow: TextOverflow.ellipsis),
-            ),
-            SizedBox(
-              height: 5,
-            ),
-            Text(
-              text3,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.blueAccent,
-                  overflow: TextOverflow.ellipsis),
-            ),
-          ],
+      child: GestureDetector(
+        child: Container(
+          height: 100,
+          width: 100,
+          decoration: BoxDecoration(
+            color: AppColor.blue2,
+            borderRadius: BorderRadius.all(Radius.circular(5.0)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                text1,
+                style: TextStyle(fontSize: 14, color: Colors.white),
+              ),
+              SizedBox(
+                height: 5,
+              ),
+              Text(
+                text2,
+                style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              SizedBox(
+                height: 5,
+              ),
+              Text(
+                text3,
+                style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blueAccent,
+                    overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
         ),
       ),
     );

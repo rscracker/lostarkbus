@@ -49,11 +49,25 @@ class LostArkList {
     "오레하(2종)",
   ];
 
+  static List fourMemType = [
+    "요호",
+    "데칼",
+    "쿠크세이튼",
+    "오레하(2종)",
+  ];
+
   static List specificType = [
     "발탄(노말)",
     "발탄(하드)",
     "비아키스(노말)",
     "비아키스(노1,하23)",
     "쿠크세이튼",
+  ];
+
+  static List item = [
+    "수호석 결정",
+    "수호강석",
+    "각성돌",
+
   ];
 }

@@ -20,6 +20,7 @@ BusModel _$BusModelFromJson(Map<String, dynamic> json) {
     passengerList: json['passengerList'] as List,
     type: json['type'] as int,
     numDriver: json['numDriver'] as int,
+    numPassenger: json['numPassenger'] as List,
   );
 }
 
@@ -36,4 +37,5 @@ Map<String, dynamic> _$BusModelToJson(BusModel instance) => <String, dynamic>{
       'passengerList': instance.passengerList,
       'type': instance.type,
       'numDriver': instance.numDriver,
+      'numPassenger': instance.numPassenger,
     };

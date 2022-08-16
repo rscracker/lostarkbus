@@ -13,6 +13,7 @@ import 'package:lostarkbus/ui/dialog/busCharacterSel.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:lostarkbus/util/lostarkList.dart';
 import 'package:lostarkbus/util/utils.dart';
+import 'package:lostarkbus/widget/flushbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Bus extends StatefulWidget {
@@ -161,9 +162,28 @@ class _BusState extends State<Bus> {
                 shrinkWrap: true,
                 itemCount: snapshot.data.docs.length,
                 itemBuilder: (BuildContext context, int index){
+                  Map data = snapshot.data.docs[index].data();
                   return GestureDetector(
-                      onTap: () => Get.dialog(participationDialog(snapshot.data.docs[index]["docId"])),
-                      child: busTile(snapshot.data.docs[index].data()));
+                      onTap: () {
+                        if((LostArkList.fourMemType.contains(data["busName"]))){
+                          if(data["driverList"].length + data[index]["passengerList"].length <= 4){
+                            !(data['passengerList'].every((e) => _mainController.characterList.contains(e))) ?
+                            Get.to(() => BusDetail(bus: data,)) :
+                            Get.dialog(participationDialog(data['docId'], data['server']));
+                          } else {
+                            CustomedFlushBar(context, "정원이 모두 찼습니다.");
+                          }
+                        } else {
+                          if(data["driverList"].length + data["passengerList"].length <= 8){
+                            !(data['passengerList'].every((e) => _mainController.characterList.contains(e))) ?
+                            Get.to(() => BusDetail(bus: data,)) :
+                            Get.dialog(participationDialog(data['docId'], data['server']));
+                          } else {
+                            CustomedFlushBar(context, "정원이 모두 찼습니다.");
+                          }
+                        }
+                      },
+                      child: busTile(data));
                 }),
           );
         }
@@ -192,20 +212,34 @@ class _BusState extends State<Bus> {
 
 
     var price = <Padding>[];
+    var numInfo = <Padding>[];
     for(int i = 0; i < bus["price1"].length; i++){
-      bus["price1"][i].forEach((key, value){
-        price.add(Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(value != 0 ? "$key : ${value}g" : "무료", style: TextStyle(color: AppColor.yellow, fontSize: 13,), overflow: TextOverflow.clip),
-        ));
+      bus["numPassenger"][i].forEach((numKey, numValue){
+        if(numValue[0] != numValue[1]){
+          bus["price1"][i].forEach((key, value){
+            price.add(Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(value != 0 ? "$key : ${value}g" : "무료", style: TextStyle(color: AppColor.yellow, fontSize: 13,), overflow: TextOverflow.clip),
+            ));
+            // bus["numPassenger"][i].forEach((numKey, numValue){
+            //   numInfo.add(Padding(
+            //     padding: const EdgeInsets.symmetric(horizontal: 4),
+            //     child: Text("$key : ${numValue[0]}/${numValue[1]}"),
+            //   ));
+            // });
+          });
+        }
       });
-
     }
     if(bus["price2"].length != 0){
-      price.add(Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Text("독식 : ${bus["price2"][0]}g", style: TextStyle(color: AppColor.dark_pink, fontSize: 13,), overflow: TextOverflow.ellipsis,),
-      ));
+      bus["numPassenger"][bus["numPassenger"].length-1].forEach((numKey, numValue){
+        if(numValue[0] != numValue[1]){
+          price.add(Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text("독식 : ${bus["price2"][0]}g", style: TextStyle(color: AppColor.dark_pink, fontSize: 13,), overflow: TextOverflow.ellipsis,),
+          ));
+        }
+      });
     }
     // driverList.forEach((e) {
     //   return column1.add(new Text(e['nick']));
@@ -225,9 +259,9 @@ class _BusState extends State<Bus> {
     //   textEditingControllers.add(textEditingController);
     //   return textFields.add(new TextField(controller: textEditingController));
     // });
-
+    ///Todo GestureDetector
     return GestureDetector(
-      onTap: !(bus['passengerList'].every((e) => _mainController.characterList.contains(e))) ? () => Get.to(() => BusDetail(bus: bus,)) : () => Get.dialog(participationDialog(bus['docId'])),
+      onTap: !(bus['passengerList'].every((e) => _mainController.characterList.contains(e))) ? () => Get.to(() => BusDetail(bus: bus,)) : () => Get.dialog(participationDialog(bus['docId'], bus['server'])),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
         child: Container(
@@ -290,7 +324,15 @@ class _BusState extends State<Bus> {
                       ),
                     ),
                   ],
-                )
+                ),
+                // Container(
+                //   height: 15,
+                //   child: Center(
+                //     child: Row(
+                //       children: numInfo,
+                //     ),
+                //   ),
+                // )
               ],
             ),
           ),
@@ -328,7 +370,7 @@ class _BusState extends State<Bus> {
     );
   }
 
-  Widget participationDialog(String docId){
+  Widget participationDialog(String docId, List server){
     return AlertDialog(
       backgroundColor: AppColor.mainColor2,
       title: Text("내 캐릭터", style: TextStyle(color: Colors.white),),
@@ -338,20 +380,20 @@ class _BusState extends State<Bus> {
         child: ListView.builder(
             itemCount: _mainController.characterList.length,
             itemBuilder: (BuildContext context, int index){
-              return selectTile(_mainController.characterList[index], index, docId);
+              return selectTile(_mainController.characterList[index], index, docId, server);
             }),
       ),
     );
   }
 
-  Widget selectTile(Map<String, dynamic> character, int index, String docId){
+  Widget selectTile(Map<String, dynamic> character, int index, String docId, List server){
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: GestureDetector(
-        onTap: () async{
+        onTap: (server.contains(_mainController.characterList[index]["server"])) ? () async{
           await DatabaseService.instance.participationBus(docId, character);
           Get.back();
-        },
+        } : () => CustomedFlushBar(context, "버스의 서버와 일치하지 않는 캐릭터입니다"),
         child: Container(
           decoration: BoxDecoration(
             color: AppColor.mainColor4,

@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lostarkbus/services/database.dart';
+import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:get/get.dart';
+import 'package:lostarkbus/util/lostarkList.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../dialog/busCharacterSel.dart';
 import 'addTradeDialog.dart';
@@ -14,6 +17,25 @@ class Trade extends StatefulWidget {
 }
 
 class _TradeState extends State<Trade> {
+
+  String server_filter = "전섭";
+  String item_filter = "물품";
+  String sort_filter = "가격순";
+
+  @override
+  void initState(){
+    super.initState();
+    getFilter();
+  }
+
+  void getFilter() async{
+    final prefs = await SharedPreferences.getInstance();
+    server_filter = prefs.getString('tradeServerFilter') ?? "전섭";
+    item_filter = prefs.getString('itemFilter')?? "물품 전체";
+    sort_filter = prefs.getString('tradeSortFilter')?? "가격순";
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -54,6 +76,7 @@ class _TradeState extends State<Trade> {
     );
   }
 
+
   Widget filterwidget() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -61,52 +84,85 @@ class _TradeState extends State<Trade> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            filter("서버"),
-            filter("물품"),
-            filter("가격순")
+            filter(server_filter,0),
+            filter(item_filter,1),
+            filter(sort_filter,2)
           ],
         ),
       ),
     );
   }
-  Widget filter(String text) {
-    return Container(
-      height: 50,
-      width: Get.width / 4,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.all(
-            Radius.circular(5.0) // POINT
+  Widget filter(String text, int type) {
+    return GestureDetector(
+      onTap: (type == 0) ? () async{
+        await Get.dialog(BaseSelectDialog(List.from(["전섭"])..addAll(LostArkList.serverList), save: true, saveKey: "tradeServerFilter",)).then((e){
+          if(e!=null){
+            setState(() {
+              server_filter = e;
+            });
+          }
+        });
+      } : (type ==1) ? () async{
+        await Get.dialog(BaseSelectDialog(List.from(["물품 전체"])..addAll(LostArkList.item),save: true, saveKey: "itemFilter", )).then((e){
+          if(e!=null){
+            setState(() {
+              item_filter = e;
+            });
+          }
+        });
+      } : () async{
+        await Get.dialog(BaseSelectDialog(['가격순', '남은 수량'], save: true, saveKey: "tradeSortFilter",)).then((e){
+          if(e!=null){
+            setState(() {
+              sort_filter = e;
+            });
+          }
+        });
+      },
+      child: Container(
+        height: 50,
+        width: Get.width / 4,
+        decoration: BoxDecoration(
+          border: Border.all(
+              color: Colors.white70,
+              width: 1
+          ),
+          borderRadius: BorderRadius.all(
+              Radius.circular(10.0) // POINT
+          ),
+          color: AppColor.mainColor2,
         ),
-        color: AppColor.mainColor2,
+        child: Center(child: Text(text, style: TextStyle(color: Colors.white, fontSize: 13, overflow: TextOverflow.ellipsis),)),
       ),
-      child: Center(child: Text(text, style: TextStyle(color: Colors.white, fontSize: 13),)),
     );
   }
 
   Widget tradeList(){
-    return Flexible(
-      fit: FlexFit.tight,
-      child: StreamBuilder<QuerySnapshot>(
-        stream: DatabaseService.instance.getTradeData(),
+    return StreamBuilder<QuerySnapshot>(
+        stream: DatabaseService.instance.getTradeData(server_filter, item: (item_filter == "물품 전체") ? null : item_filter),
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if(snapshot.connectionState == ConnectionState.waiting)
-            return Center(child: CircularProgressIndicator(),);
-          if(snapshot.hasData)
-            return GridView.builder(
-              itemCount: snapshot.data.size,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 3,
-                crossAxisSpacing: 5,
+            return Expanded(child: Center(child: CircularProgressIndicator(),));
+          if(snapshot.data.size == 0){
+            return Expanded(child: Center(child: Text("등록된 물품이 없습니다", style:  TextStyle(color: Colors.white70),),));
+          }
+          return Flexible(
+            fit: FlexFit.tight,
+            child: GridView.builder(
+                itemCount: snapshot.data.size,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 3,
+                  crossAxisSpacing: 5,
+                ),
+                itemBuilder: (context, int index){
+                  if(snapshot.data.docs[index] != null)
+                    return tradeContainer(snapshot.data.docs[index].data());
+                },
               ),
-              itemBuilder: (context, int index){
-                if(snapshot.data.docs[index] != null)
-                  return tradeContainer(snapshot.data.docs[index].data());
-              },
-            );
+          );
         }
-      ),
-    );
+      );
   }
 
   Widget tradeContainer(Map<String, dynamic> trade){

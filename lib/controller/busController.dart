@@ -12,6 +12,7 @@ class BusController extends GetxController{
   RxInt price2 = 0.obs;
   RxString errorMessage = "".obs;
   RxInt time = 0.obs;
+  RxList numPassenger = [].obs;
   //RxMap<String, dynamic> bus = {}.obs;
 
   @override
@@ -34,6 +35,7 @@ class BusController extends GetxController{
     this.busForm.time = time.value;
     this.busForm.price1.assignAll(price1);
     this.busForm.busName = boss.value;
+    this.busForm.numPassenger.assignAll(numPassenger);
     if(price2.value != 0){
       this.busForm.price2.assign(price2.value);
     }

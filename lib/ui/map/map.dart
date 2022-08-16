@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lostarkbus/services/database.dart';
+import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/characterSelDialog.dart';
 import 'package:lostarkbus/ui/map/addmapDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:get/get.dart';
+import 'package:lostarkbus/util/lostarkList.dart';
 import 'package:lostarkbus/util/utils.dart';
 import 'package:lostarkbus/widget/flushbar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../dialog/busCharacterSel.dart';
 
@@ -17,6 +20,25 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+
+  String server_filter = "전섭";
+  String type_filter = "전체(종류)";
+  String region_filter = "전체(지역)";
+
+  @override
+  void initState(){
+    super.initState();
+    getFilter();
+  }
+
+  void getFilter() async{
+    final prefs = await SharedPreferences.getInstance();
+    server_filter = prefs.getString('mapServerFilter') ?? "전섭";
+    type_filter = prefs.getString('mapTypeFilter')?? "전체(종류)";
+    region_filter = prefs.getString('regionFilter')?? "전체(지역)";
+    setState(() {});
+  }
+  
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -65,25 +87,56 @@ class _MapPageState extends State<MapPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            filter("서버"),
-            filter("지도 종류"),
-            filter("시간순")
+            filter(server_filter,0),
+            filter(type_filter,1),
+            filter(region_filter,2)
           ],
         ),
       ),
     );
   }
-  Widget filter(String text) {
-    return Container(
-      height: 50,
-      width: Get.width / 4,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.all(
-            Radius.circular(5.0) // POINT
+  Widget filter(String text, int type) {
+    return GestureDetector(
+      onTap: (type == 0) ? () async{
+        await Get.dialog(BaseSelectDialog(List.from(["전섭"])..addAll(LostArkList.serverList), save: true, saveKey: "mapServerFilter",)).then((e){
+          if(e!=null){
+            setState(() {
+              server_filter = e;
+            });
+          }
+        });
+      } : (type ==1) ? () async{
+        await Get.dialog(BaseSelectDialog(['전체(종류)', '희귀', '영웅', '전설'], save: true, saveKey: "mapTypeFilter", )).then((e){
+          if(e!=null){
+            setState(() {
+              type_filter = e;
+            });
+          }
+        });
+      } : () async{
+        await Get.dialog(BaseSelectDialog(['전체(지역)', '파푸니카', '베른 남부'], save: true, saveKey: "regionFilter",)).then((e){
+          if(e!=null){
+            setState(() {
+              region_filter = e;
+            });
+          }
+        });
+      },
+      child: Container(
+        height: 50,
+        width: Get.width / 4,
+        decoration: BoxDecoration(
+          border: Border.all(
+              color: Colors.white70,
+              width: 1
+          ),
+          borderRadius: BorderRadius.all(
+              Radius.circular(10.0) // POINT
+          ),
+          color: AppColor.mainColor2,
         ),
-        color: AppColor.mainColor2,
+        child: Center(child: Text(text, style: TextStyle(color: Colors.white, fontSize: 13, overflow: TextOverflow.ellipsis),)),
       ),
-      child: Center(child: Text(text, style: TextStyle(color: Colors.white, fontSize: 13),)),
     );
   }
 
@@ -91,10 +144,19 @@ class _MapPageState extends State<MapPage> {
     return Flexible(
       fit: FlexFit.tight,
       child: StreamBuilder<QuerySnapshot>(
-        stream: DatabaseService.instance.getMapData(),
+        stream: DatabaseService.instance.getMapData(
+            server_filter == "전섭" ? null : server_filter,
+            type_filter == "전체(종류)" ? null : type_filter,
+            region_filter == "전체(지역)" ? null: region_filter,
+        ),
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if(snapshot.connectionState == ConnectionState.waiting)
-            return Center(child: CircularProgressIndicator(),);
+            return Center(child: CircularProgressIndicator(
+              color: Colors.white,
+            ),);
+          if(snapshot.data.size == 0 || !snapshot.hasData){
+            return Center(child: Text("등록된 지도가 없습니다", style: TextStyle(color: Colors.white70),),);
+          }
           List mapList = [];
           if(snapshot.hasData)
             for(int i=0; i < snapshot.data.size; i++){
@@ -150,8 +212,8 @@ class _MapPageState extends State<MapPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   SizedBox(height: 20,),
-                  customedText(mapData['loc'][0]),
-                  customedText(mapData['loc'][1]),
+                  customedText(mapData['loc1']),
+                  customedText(mapData['loc2']),
                   customedText(Utils.timeinvert(mapData['time'])),
                   customedText('${mapData['participation'].length.toString()} / 4'),
                 ],

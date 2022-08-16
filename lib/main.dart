@@ -42,7 +42,14 @@ class Splash extends StatelessWidget {
             return Center(child: CircularProgressIndicator());
           //print(snapshot.data.uid);
           if (snapshot.data == null) {
-            return MainPage();
+            final FirebaseAuth _auth = FirebaseAuth.instance;
+            (() async{
+              try {
+                UserCredential result = await _auth.signInAnonymously();
+              } catch (e) {
+                print(e.toString());
+              }
+            });
           } else {
             String uid = snapshot.data.uid;
             return FutureBuilder(
@@ -58,6 +65,7 @@ class Splash extends StatelessWidget {
         });
   }
 }
+
 
 class MainPage extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;

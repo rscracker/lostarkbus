@@ -4,6 +4,7 @@ import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/characterSelDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
+import 'package:lostarkbus/util/lostarkList.dart';
 
 class AddTrade extends StatefulWidget {
 
@@ -14,7 +15,7 @@ class AddTrade extends StatefulWidget {
 class _AddTradeState extends State<AddTrade> {
 
   Map<String, dynamic> character =
-  {"nick" : "admin",
+  {"nick" : "캐릭터 선택",
     "server" : "서버",
   };
   String tradeItem = "각성돌";
@@ -57,50 +58,56 @@ class _AddTradeState extends State<AddTrade> {
         ),
         height: type == 2 ? 121 : 60,
         width: 230,
-        child: Row(
-          children: [
-            Container(
-              height: 60,
-              width: 70,
-              child: Center(
-                child: Text(text,
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Row(
+            children: [
+              SizedBox(
+                child: Center(
+                    child: Text(
+                      text,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 15,
+                      ),
+                    )),
+                width: 50,
               ),
-            ),
-            GestureDetector(
-              onTap: (type == 1) ?
-                  () async{
-                await Get.dialog(BaseSelectDialog(["각성돌", "수호석 결정"])).then((e){
-                  if(e != null)
-                    setState(() {
-                      tradeItem = e;
-                    });
-                }
-                );
-              } :
-                  () async{
-                  await Get.dialog(CharacterSelDialog()).then((e){
-                  if(e!=null){
-                    setState(() {
-                      character = e;
-                    });
+              GestureDetector(
+                onTap: (type == 1) ?
+                    () async{
+                  await Get.dialog(BaseSelectDialog(LostArkList.item)).then((e){
+                    if(e != null)
+                      setState(() {
+                        tradeItem = e;
+                      });
                   }
-                });
+                  );
+                } :
+                    () async{
+                    await Get.dialog(CharacterSelDialog()).then((e){
+                    if(e!=null){
+                      setState(() {
+                        character = e;
+                      });
+                    }
+                  });
 
-              }
-              ,
-              child: Container(
-                height: 60,
-                width: 160,
-                child: type == 0 ? Center(child: Text(character['nick'] ?? "",
-                  style: TextStyle(color: Colors.white),
-                )) : Center(child: Text(tradeItem,
-                  style : TextStyle(color: Colors.white70,),
-                )),
-              ),
-            )
-          ],
+                }
+                ,
+                child: Container(
+                  height: 60,
+                  width: 160,
+                  child: type == 0 ? Center(child: Text(character['nick'] ?? "",
+                    style: TextStyle(color: Colors.white70),
+                  )) : Center(child: Text(tradeItem,
+                    style : TextStyle(color: Colors.white70,),
+                  )),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -108,7 +115,7 @@ class _AddTradeState extends State<AddTrade> {
 
   Widget priceSel() {
     return Padding(
-      padding: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Container(
         height: 60,
         width: 230,
@@ -248,6 +255,7 @@ class _AddTradeState extends State<AddTrade> {
             "item" : tradeItem,
             "price" : price,
             "quantity" : quantity,
+            "server" : character['server'],
           };
           await DatabaseService.instance.addTrade(character, form);
           Get.back();

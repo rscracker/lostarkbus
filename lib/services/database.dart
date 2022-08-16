@@ -69,6 +69,19 @@ class DatabaseService {
     }
   }
 
+  Future<CharacterModel> getCharacterData(String body, String nick){
+    CharacterModel characterData = CharacterModel.initCharacterForm();
+    List splited = body.split("profile-character-info__lv");
+    characterData.nick = nick;
+    // characterData.level= int.parse(splited[1].substring(5,7));
+    String level2 = body.split("달성 아이템 레벨</span><span><small>Lv.</small>")[1].substring(0,15).split('<small>')[0].toString().replaceAll(",", "");
+    characterData.level = int.parse(level2);
+    String laClass = splited[0].toString().trim();
+    characterData.lostArkClass = laClass.substring(laClass.length - 48, laClass.length-20).split("\"")[2];
+    characterData.server = body.split("profile-character-info__server")[1].split("\"")[2].substring(1);
+    return Future.value(characterData);
+  }
+
   saveUserData(String uid) async{
     await userCollection.doc(uid).set(_user.toJson());
   }
@@ -107,6 +120,12 @@ class DatabaseService {
   }
 
   participationBus(String docId, Map<String,dynamic> character) async{
+    // List serverNum = [];
+    // await busCollection.doc(docId).get().then((e){
+    //   serverNum = e.data()["numPassenger"][e.data()["server"]
+    //       .indexOf(character['server'])][character['server']];
+    // });
+    // await busCollection.doc(docId).update({"numPassenger.${character['server']}" : [serverNum[0] + 1, serverNum[1]]});
     await busCollection.doc(docId).update({"passengerList" : FieldValue.arrayUnion([character])});
   }
 
@@ -114,12 +133,13 @@ class DatabaseService {
     await mapCollection.doc(docId).update({"participation" : FieldValue.arrayUnion([character])});
   }
 
-  addMap(Map<String, dynamic> character, String type, List loc, int time) async{
+  addMap(Map<String, dynamic> character, String type, String loc1, String loc2, int time) async{
     Map<String, dynamic> mapData = {
       "docId" : "",
       "uploader" : character,
       "type" : type,
-      "loc" : loc,
+      "loc1" : loc1,
+      "loc2" : loc2,
       "time" : time,
       "participation" : [character],
     };
@@ -155,11 +175,40 @@ class DatabaseService {
     return busCollection.doc(uid).snapshots();
   }
 
-  Stream<QuerySnapshot> getMapData(){
-    return mapCollection.snapshots();
+  Stream<QuerySnapshot> getMapData(String server, String type, String region){
+    if(server == "전섭"){
+      if(type != null && region != null){
+        return mapCollection.where("type", isEqualTo: type).where("loc1", isEqualTo: region).snapshots();
+      } else if(type != null && region == null){
+        return mapCollection.where("type", isEqualTo: type).snapshots();
+      } else if(type == null && region != null){
+        return mapCollection.where("loc1", isEqualTo: region).snapshots();
+      }
+      return mapCollection.snapshots();
+    } else {
+      if(type != null && region != null){
+        return mapCollection.where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).where("loc1", isEqualTo: region).snapshots();
+      } else if(type != null && region == null){
+        return mapCollection.where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).snapshots();
+      } else if(type == null && region != null){
+        return mapCollection.where("uploader.server", isEqualTo: server).where("loc1", isEqualTo: region).snapshots();
+      }
+      return mapCollection.where("uploader.server", isEqualTo: server).snapshots();
+    }
   }
 
-  Stream<QuerySnapshot> getTradeData(){
-    return tradeCollection.snapshots();
+  Stream<QuerySnapshot> getTradeData(String server, {String item, String sort}){
+    if(server == "전섭"){
+      if(item != null){
+        return tradeCollection.where("item", isEqualTo: item).snapshots();
+      }
+      return tradeCollection.snapshots();
+    } else {
+      if(item != null){
+        return tradeCollection.where("server", isEqualTo: server).where("item", isEqualTo: item).snapshots();
+      }
+      return tradeCollection.where("server", isEqualTo: server).snapshots();
+    }
+    
   }
 }
