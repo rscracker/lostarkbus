@@ -42,14 +42,8 @@ class Splash extends StatelessWidget {
             return Center(child: CircularProgressIndicator());
           //print(snapshot.data.uid);
           if (snapshot.data == null) {
-            final FirebaseAuth _auth = FirebaseAuth.instance;
-            (() async{
-              try {
-                UserCredential result = await _auth.signInAnonymously();
-              } catch (e) {
-                print(e.toString());
-              }
-            });
+            signInAnon();
+            return Container();
           } else {
             String uid = snapshot.data.uid;
             return FutureBuilder(
@@ -64,26 +58,9 @@ class Splash extends StatelessWidget {
           }
         });
   }
-}
 
-
-class MainPage extends StatelessWidget {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: TextButton(
-          child: Text("Login"),
-          onPressed: () {
-            signInAnon();
-          },
-        ),
-      ),
-    );
-  }
-
-  void signInAnon() async {
+  signInAnon() async {
+    final FirebaseAuth _auth = FirebaseAuth.instance;
     try {
       UserCredential result = await _auth.signInAnonymously();
     } catch (e) {
@@ -91,3 +68,26 @@ class MainPage extends StatelessWidget {
     }
   }
 }
+
+
+// class initPage extends StatelessWidget {
+//   final FirebaseAuth _auth = FirebaseAuth.instance;
+//   @override
+//   Widget build(BuildContext context) {
+//     signInAnon();
+//     return Scaffold(
+//       body: Center(
+//         child: CircularProgressIndicator()
+//       ),
+//     );
+//   }
+//
+//   // Future<bool> signInAnon() async {
+//   //   try {
+//   //     UserCredential result = await _auth.signInAnonymously();
+//   //   } catch (e) {
+//   //     print(e.toString());
+//   //   }
+//   //   return Future.value(result);
+//   // }
+// }
