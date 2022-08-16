@@ -251,7 +251,7 @@ class _MypageState extends State<Mypage> {
               child: _mainController.characterList.length == 0 ? Container(
                   height: 100,
                   child: Center(child: Text("등록된 캐릭터가 없습니다", style: TextStyle(color: Colors.white),)),
-                ) : ListView.builder(
+                ) : Obx(() => ListView.builder(
                 scrollDirection: Axis.horizontal,
                   itemCount: _mainController.characterList.length,
                   itemBuilder: (context, index) {
@@ -303,7 +303,7 @@ class _MypageState extends State<Mypage> {
                         ),
                       ),
                     );
-                  }),
+                  })),
             ),
           ],
         ),
