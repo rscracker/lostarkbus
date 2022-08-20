@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -119,13 +121,32 @@ class DatabaseService {
     _mainController.myUpload.add(busForm.toJson());
   }
 
-  participationBus(String docId, Map<String,dynamic> character) async{
-    // List serverNum = [];
-    // await busCollection.doc(docId).get().then((e){
-    //   serverNum = e.data()["numPassenger"][e.data()["server"]
-    //       .indexOf(character['server'])][character['server']];
-    // });
-    // await busCollection.doc(docId).update({"numPassenger.${character['server']}" : [serverNum[0] + 1, serverNum[1]]});
+  registerPay1(String docId, int index, String receiver) async{
+    List passenger = [];
+    await busCollection.doc(docId).get().then((e) => passenger.assignAll(e.data()['passengerList']));
+    passenger[index]["payment"]  = [receiver, "우편"];
+    await busCollection.doc(docId).update({"passengerList" : passenger});
+  }
+
+  registerPay2(String docId, int index, String receiver, List jewel) async{
+    List passenger = [];
+    await busCollection.doc(docId).get().then((e) => passenger.assignAll(e.data()['passengerList']));
+    passenger[index]["payment"]  = [receiver, jewel[0], jewel[1]];
+    await busCollection.doc(docId).update({"passengerList" : passenger});
+  }
+  
+  buyItem(String docId, int quantity) async{
+    await tradeCollection.doc(docId).update({"buy" : FieldValue.increment(quantity)});
+}
+
+  participationBus(String docId, Map<String,dynamic> character, int type) async{
+    character['payment'] = [];
+    List numPassenger = [];
+    await busCollection.doc(docId).get().then((e){
+      numPassenger.assignAll(e.data()["numPassenger"]);
+    });
+    numPassenger[type] = numPassenger[type] - 1;
+    await busCollection.doc(docId).update({"numPassenger" : numPassenger});
     await busCollection.doc(docId).update({"passengerList" : FieldValue.arrayUnion([character])});
   }
 
@@ -209,6 +230,7 @@ class DatabaseService {
       }
       return tradeCollection.where("server", isEqualTo: server).snapshots();
     }
-    
   }
+
+
 }

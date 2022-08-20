@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:lostarkbus/controller/mainController.dart';
 import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/characterSelDialog.dart';
@@ -20,6 +21,8 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+
+  MainController _mainController = Get.find();
 
   String server_filter = "전섭";
   String type_filter = "전체(종류)";
@@ -183,12 +186,20 @@ class _MapPageState extends State<MapPage> {
       child: Stack(
         children: [
           GestureDetector(
-            onTap: (mapData['participation'].length < 4) ? () async{
+            onTap:
+            (mapData['participation'].length < 4) ? () async{
               Map<String, dynamic> character = await Get.dialog(CharacterSelDialog());
-              if(character != null){
-                await DatabaseService.instance.participationMap(mapData['docId'], character);
+              // if(mapData['participation'].contains(character)){
+              //   CustomedFlushBar(context, "이미 참여한 캐릭터입니다");
+              // }
+              if(character != null && !mapData['participation'].contains(character)){
+                if(character['server'] == mapData['uploader']['server']){
+                  await DatabaseService.instance.participationMap(mapData['docId'], character); 
+                } else {
+                  CustomedFlushBar(context, "서버가 다릅니다");
+                }
               }
-            } : () => CustomedFlushBar(context, "text")
+            } : () => CustomedFlushBar(context, "인원이 다 찼습니다")
             ,
             child: Container(
             decoration: BoxDecoration(

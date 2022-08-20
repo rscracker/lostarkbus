@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lostarkbus/services/database.dart';
+import 'package:lostarkbus/ui/dialog/payDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
+import 'package:lostarkbus/widget/flushbar.dart';
 import 'package:lostarkbus/widget/title.dart';
 
 class BusDetail extends StatefulWidget {
@@ -106,14 +108,9 @@ class _BusDetailState extends State<BusDetail> {
               var column1 = <Padding>[];
               var column2 = <Padding>[];
               if (snapshot.connectionState == ConnectionState.waiting)
-                return GestureDetector(
-                  onTap: () {
-
-                  },
-                  child: Container(
-                    height: 200,
-                    child: CircularProgressIndicator(),
-                  ),
+                return Container(
+                  height: 200,
+                  child: CircularProgressIndicator(),
                 );
               passengerList = snapshot.data.data()['passengerList'];
               for (int i = 0; i < passengerList.length; i++) {
@@ -121,17 +118,17 @@ class _BusDetailState extends State<BusDetail> {
                     ? column1.add(box2(
                         passengerList[i]['server'],
                         passengerList[i]['nick'],
-                        (widget.bus['driverList'].every((e) =>
-                                e['server'] != passengerList[i]['server']))
-                            ? "보석 교환"
-                            : "우편"))
+                        passengerList[i]['payment']
+                        , i
+                )
+                )
                     : column2.add(box2(
-                        passengerList[i]['server'],
-                        passengerList[i]['nick'],
-                        (widget.bus['driverList'].every((e) =>
-                                e['server'] == passengerList[i]['server']))
-                            ? "보석 교환"
-                            : "우편"));
+                    passengerList[i]['server'],
+                    passengerList[i]['nick'],
+                    passengerList[i]['payment']
+                    , i
+                )
+                );
               }
               return Container(
                 height: 300,
@@ -222,10 +219,17 @@ class _BusDetailState extends State<BusDetail> {
     );
   }
 
-  Widget box2(String text1, String text2, String text3) {
+  Widget box2(String text1, String text2, List payment, int index) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: GestureDetector(
+      child: InkWell(
+        onTap: payment.length == 0 ? () {
+          Get.dialog(PayDialog(widget.bus['driverList'],
+            widget.bus['docId'],
+            index));
+        } : payment[1] == "우편" ? null
+        : () => Get.dialog(jewelInfo(payment[1], payment[2]))
+        ,
         child: Container(
           height: 100,
           width: 100,
@@ -253,8 +257,15 @@ class _BusDetailState extends State<BusDetail> {
               SizedBox(
                 height: 5,
               ),
-              Text(
-                text3,
+              payment.length == 0 ? Container() : Text(
+                payment[1] == "우편" ? "우편" : "보석 거래",
+                style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blueAccent,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              payment.length == 0 ? Container() :Text(
+                payment[0],
                 style: TextStyle(
                     fontSize: 14,
                     color: Colors.blueAccent,
@@ -267,9 +278,19 @@ class _BusDetailState extends State<BusDetail> {
     );
   }
 
-  Widget jewelDialog(){
+  Widget jewelInfo(String jewel, String price){
     return AlertDialog(
-
+      backgroundColor: AppColor.mainColor2,
+      content: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(jewel, style: TextStyle(color: AppColor.lightBlue),),
+          SizedBox(height: 25,),
+          Text(price, style: TextStyle(color: AppColor.lightYellow)),
+        ],
+      ),
     );
   }
+
 }

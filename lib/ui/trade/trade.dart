@@ -22,6 +22,11 @@ class _TradeState extends State<Trade> {
   String item_filter = "물품";
   String sort_filter = "가격순";
 
+  String buyerNick = "구매할 닉네임";
+  String quantity = "수량";
+
+  TextEditingController quantityController =TextEditingController();
+
   @override
   void initState(){
     super.initState();
@@ -166,35 +171,38 @@ class _TradeState extends State<Trade> {
   }
 
   Widget tradeContainer(Map<String, dynamic> trade){
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColor.mainColor4,
-          borderRadius: BorderRadius.all(
-              Radius.circular(5.0)
+    return GestureDetector(
+      onTap: () => Get.dialog(buyDialog(trade["docId"])),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColor.mainColor4,
+            borderRadius: BorderRadius.all(
+                Radius.circular(5.0)
+            ),
+            // border: Border.all(
+            //   color: Colors.purple,
+            //   width: 1
+            // ),
           ),
-          // border: Border.all(
-          //   color: Colors.purple,
-          //   width: 1
-          // ),
-        ),
-        width: 100,
-        height: 100,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Text(
-                trade['uploader'] != null ? trade['uploader']['server'] : "",
-                style: TextStyle(color: AppColor.lightBlue, fontWeight: FontWeight.bold, ),
-            ),
-            customedText(trade['item']  ?? ""),
-            Text(
-              trade['price'].toString() + "g"  ?? "",
-              style: TextStyle(color: AppColor.yellow, ),
-            ),
-            customedText(trade['buy'].toString() + " / " + trade['quantity'].toString()  ?? "" ),
-          ],
+          width: 100,
+          height: 100,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Text(
+                  trade['uploader'] != null ? trade['uploader']['server'] : "",
+                  style: TextStyle(color: AppColor.lightBlue, fontWeight: FontWeight.bold, ),
+              ),
+              customedText(trade['item']  ?? ""),
+              Text(
+                trade['price'].toString() + "g"  ?? "",
+                style: TextStyle(color: AppColor.yellow, ),
+              ),
+              customedText(trade['buy'].toString() + " / " + trade['quantity'].toString()  ?? "" ),
+            ],
+          ),
         ),
       ),
     );
@@ -202,5 +210,69 @@ class _TradeState extends State<Trade> {
 
   Widget customedText(String text, {int colType}){
     return Text(text, style: TextStyle(color: Colors.white70),);
+  }
+
+  Widget buyDialog(String docId){
+    return AlertDialog(
+      backgroundColor: AppColor.mainColor2,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Container(
+          //   width: 160,
+          //   height: 50,
+          //   color: AppColor.mainColor4,
+          //   child: Center(
+          //     child: Text(buyerNick, style: TextStyle(color: Colors.white70),),
+          //   ),
+          // ),
+          // SizedBox(height: 12,),
+          Container(
+            color: AppColor.mainColor4,
+            width: 160,
+            height: 50,
+            child: TextField(
+              style: TextStyle(color: Colors.white70),
+              textAlign: TextAlign.center,
+              cursorColor: AppColor.mainColor5,
+              controller: quantityController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: "수량",
+                disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.transparent)
+                ),
+                focusColor: AppColor.mainColor,
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.transparent)
+                ),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: Colors.transparent)
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 12,),
+          GestureDetector(
+            onTap: () async{
+              await DatabaseService.instance.buyItem(docId, int.parse(quantityController.text));
+              Get.back();
+            },
+            child: Container(
+              width: 160,
+              height: 50,
+              color: AppColor.mainColor4,
+              child: Center(
+                child: Text("구매 신청", style: TextStyle(color: Colors.white70),),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

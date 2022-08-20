@@ -7,7 +7,7 @@ class BusController extends GetxController{
   RxList driverList = [].obs;
   RxInt numdriver = 0.obs;
   RxList server = [].obs;
-  RxString boss = "미정".obs;
+  RxString boss = "".obs;
   RxList price1 = [].obs;
   RxInt price2 = 0.obs;
   RxString errorMessage = "".obs;
@@ -40,6 +40,7 @@ class BusController extends GetxController{
       this.busForm.price2.assign(price2.value);
     }
   }
+
 
   // registerCharacter(Map<String, dynamic> character) async{
   //   this.myCharacter = character;

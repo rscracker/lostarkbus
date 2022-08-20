@@ -8,7 +8,7 @@ class BaseSelectDialog extends StatefulWidget {
   int width;
   int height;
   List content;
-  bool save;
+  var save = false;
   String saveKey;
   //String title;
 
@@ -36,7 +36,7 @@ class _BaseSelectDialogState extends State<BaseSelectDialog> {
         child: InkWell(
           onTap: () async{
             Get.back(result: e);
-            if(widget.save){
+            if(widget.save != null && widget.save){
               SharedPreferences prefs = await SharedPreferences.getInstance();
               await prefs.setString(widget.saveKey, e);
             }
@@ -60,9 +60,11 @@ class _BaseSelectDialogState extends State<BaseSelectDialog> {
       //title: Center(child: Text(widget.title, style: TextStyle(color: Colors.white70),),),
       content: Container(
         width: 200,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: content,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: content,
+          ),
         ),
       ),
     );

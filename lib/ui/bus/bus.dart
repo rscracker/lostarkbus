@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lostarkbus/controller/mainController.dart';
+import 'package:lostarkbus/model/busModel.dart';
 import 'package:lostarkbus/model/characterModel.dart';
 import 'package:lostarkbus/model/userModel.dart';
 import 'package:lostarkbus/services/database.dart';
@@ -163,27 +164,32 @@ class _BusState extends State<Bus> {
                 itemCount: snapshot.data.docs.length,
                 itemBuilder: (BuildContext context, int index){
                   Map data = snapshot.data.docs[index].data();
-                  return GestureDetector(
-                      onTap: () {
-                        if((LostArkList.fourMemType.contains(data["busName"]))){
-                          if(data["driverList"].length + data[index]["passengerList"].length <= 4){
-                            !(data['passengerList'].every((e) => _mainController.characterList.contains(e))) ?
-                            Get.to(() => BusDetail(bus: data,)) :
-                            Get.dialog(participationDialog(data['docId'], data['server']));
+                  BusModel busData= BusModel.fromJson(snapshot.data.docs[index].data());
+                  if(busData.type == 0){
+                    return GestureDetector(
+                        onTap: () {
+                          if((LostArkList.fourMemType.contains(busData.busName))){
+                            if(busData.driverList.length + busData.passengerList.length <= 4){
+                              !(data['passengerList'].every((e) => _mainController.characterList.contains(e))) ?
+                              Get.to(() => BusDetail(bus: data,)) :
+                              Get.dialog(participationDialog(busData.docId, busData.server));
+                            } else {
+                              CustomedFlushBar(context, "정원이 모두 찼습니다.");
+                            }
                           } else {
-                            CustomedFlushBar(context, "정원이 모두 찼습니다.");
+                            if(data["driverList"].length + data["passengerList"].length <= 8){
+                              !(data['passengerList'].every((e) => _mainController.characterList.contains(e))) ?
+                              Get.to(() => BusDetail(bus: data,)) :
+                              Get.dialog(participationDialog(data['docId'], data['server']));
+                            } else {
+                              CustomedFlushBar(context, "정원이 모두 찼습니다.");
+                            }
                           }
-                        } else {
-                          if(data["driverList"].length + data["passengerList"].length <= 8){
-                            !(data['passengerList'].every((e) => _mainController.characterList.contains(e))) ?
-                            Get.to(() => BusDetail(bus: data,)) :
-                            Get.dialog(participationDialog(data['docId'], data['server']));
-                          } else {
-                            CustomedFlushBar(context, "정원이 모두 찼습니다.");
-                          }
-                        }
-                      },
-                      child: busTile(data));
+                        },
+                        child: busTile(data));
+                  } else {
+                    return recruitTile(busData);
+                  }
                 }),
           );
         }
@@ -214,33 +220,29 @@ class _BusState extends State<Bus> {
     var price = <Padding>[];
     var numInfo = <Padding>[];
     for(int i = 0; i < bus["price1"].length; i++){
-      bus["numPassenger"][i].forEach((numKey, numValue){
-        if(numValue[0] != numValue[1]){
-          bus["price1"][i].forEach((key, value){
-            price.add(Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(value != 0 ? "$key : ${value}g" : "무료", style: TextStyle(color: AppColor.yellow, fontSize: 13,), overflow: TextOverflow.clip),
-            ));
-            // bus["numPassenger"][i].forEach((numKey, numValue){
-            //   numInfo.add(Padding(
-            //     padding: const EdgeInsets.symmetric(horizontal: 4),
-            //     child: Text("$key : ${numValue[0]}/${numValue[1]}"),
-            //   ));
-            // });
-          });
-        }
-      });
-    }
-    if(bus["price2"].length != 0){
-      bus["numPassenger"][bus["numPassenger"].length-1].forEach((numKey, numValue){
-        if(numValue[0] != numValue[1]){
+      if(bus["numPassenger"][i] != 0){
+        bus["price1"][i].forEach((key, value){
           price.add(Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Text("독식 : ${bus["price2"][0]}g", style: TextStyle(color: AppColor.dark_pink, fontSize: 13,), overflow: TextOverflow.ellipsis,),
+            child: Text(value != 0 ? "$key : ${value}g" : "무료", style: TextStyle(color: AppColor.yellow, fontSize: 13,), overflow: TextOverflow.clip),
           ));
-        }
-      });
+        });
+      }
     }
+    if(bus["price2"].length != 0){
+      if(bus["numPassenger"][bus["numPassenger"].length-1] != 0){
+        price.add(Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text("독식 : ${bus["price2"][0]}g", style: TextStyle(color: AppColor.dark_pink, fontSize: 13,), overflow: TextOverflow.ellipsis,),
+        ));
+      }
+    }
+    // else if(bus["price2"].length == 0 && LostArkList.specificType.contains(bus["busName"])){
+    //   price.add(Padding(
+    //     padding: const EdgeInsets.all(8.0),
+    //     child: Text("자율", style: TextStyle(color: AppColor.dark_pink, fontSize: 13,), overflow: TextOverflow.ellipsis,),
+    //   ));
+    // }
     // driverList.forEach((e) {
     //   return column1.add(new Text(e['nick']));
     // });
@@ -341,6 +343,35 @@ class _BusState extends State<Bus> {
     );
   }
 
+  Widget recruitTile(BusModel bus){
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.all(
+              Radius.circular(5.0)
+          ),
+          color: AppColor.mainColor4,
+        ),
+        child: Column(
+          children: [
+            tileTop(bus.busName, bus.server, bus.time),
+            Padding(
+              padding: const EdgeInsets.only(top : 8.0),
+              child: Container(height: 1, color: Colors.white70,),
+            ),
+            Container(height: 50,
+              child: Center(
+                child: Text("기사모집 (${bus.driverList.length.toString()} / ${bus.numDriver.toString()})", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+              )
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget registerDialog(){
     return AlertDialog(
       backgroundColor: AppColor.mainColor2,
@@ -391,9 +422,12 @@ class _BusState extends State<Bus> {
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: GestureDetector(
         onTap: (server.contains(_mainController.characterList[index]["server"])) ? () async{
-          await DatabaseService.instance.participationBus(docId, character);
+          await DatabaseService.instance.participationBus(docId, character, server.indexOf(character['server']));
           Get.back();
-        } : () => CustomedFlushBar(context, "버스의 서버와 일치하지 않는 캐릭터입니다"),
+        } : () {
+          Get.back();
+          CustomedFlushBar(context, "버스의 서버와 일치하지 않는 캐릭터입니다");
+        },
         child: Container(
           decoration: BoxDecoration(
             color: AppColor.mainColor4,

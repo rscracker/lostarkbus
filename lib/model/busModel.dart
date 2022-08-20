@@ -53,6 +53,8 @@ class BusModel{
     );
   }
 
+
+
   factory BusModel.fromJson(Map<String, dynamic> json) => _$BusModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$BusModelToJson(this);
