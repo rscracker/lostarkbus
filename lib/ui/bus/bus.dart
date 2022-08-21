@@ -120,15 +120,16 @@ class _BusState extends State<Bus> {
             });
           }
         });
-      } : () async{
-        await Get.dialog(BaseSelectDialog(['시간순', '가격순'], save: true, saveKey: "sortFilter",)).then((e){
-          if(e!=null){
-            setState(() {
-              sort_filter = e;
-            });
-          }
-        });
-      },
+      } : null,
+      //     () async{
+      //   await Get.dialog(BaseSelectDialog(['시간순', '가격순'], save: true, saveKey: "sortFilter",)).then((e){
+      //     if(e!=null){
+      //       setState(() {
+      //         sort_filter = e;
+      //       });
+      //     }
+      //   });
+      // },
       child: Container(
         height: 50,
         width: Get.width / 4,
@@ -151,7 +152,8 @@ class _BusState extends State<Bus> {
     return Flexible(
       fit: FlexFit.tight,
       child: StreamBuilder<QuerySnapshot>(
-                stream: DatabaseService.instance.getBusData(server_filter, type: (type_filter == "전체" || type_filter == "버스 종류") ? null : type_filter) ,
+                stream: DatabaseService.instance.getBusData(server_filter,
+                    type: (type_filter == "전체" || type_filter == "버스 종류") ? null : type_filter,),
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           List busList = [];
           if(snapshot.connectionState == ConnectionState.waiting)
@@ -344,29 +346,34 @@ class _BusState extends State<Bus> {
   }
 
   Widget recruitTile(BusModel bus){
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(
-              Radius.circular(5.0)
+    return GestureDetector(
+      onTap: (bus.driverList.length < bus.numDriver) ? (){
+
+      } : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(
+                Radius.circular(5.0)
+            ),
+            color: AppColor.mainColor4,
           ),
-          color: AppColor.mainColor4,
-        ),
-        child: Column(
-          children: [
-            tileTop(bus.busName, bus.server, bus.time),
-            Padding(
-              padding: const EdgeInsets.only(top : 8.0),
-              child: Container(height: 1, color: Colors.white70,),
-            ),
-            Container(height: 50,
-              child: Center(
-                child: Text("기사모집 (${bus.driverList.length.toString()} / ${bus.numDriver.toString()})", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+          child: Column(
+            children: [
+              tileTop(bus.busName, bus.server, bus.time),
+              Padding(
+                padding: const EdgeInsets.only(top : 8.0),
+                child: Container(height: 1, color: Colors.white70,),
+              ),
+              Container(height: 50,
+                child: Center(
+                  child: Text("기사모집 (${bus.driverList.length.toString()} / ${bus.numDriver.toString()})", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+                )
               )
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -422,7 +429,7 @@ class _BusState extends State<Bus> {
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: GestureDetector(
         onTap: (server.contains(_mainController.characterList[index]["server"])) ? () async{
-          await DatabaseService.instance.participationBus(docId, character, server.indexOf(character['server']));
+          await DatabaseService.instance.participationBus(docId, character, server.length == LostArkList.serverList.length ? 0 : server.indexOf(character['server']));
           Get.back();
         } : () {
           Get.back();

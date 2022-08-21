@@ -148,6 +148,7 @@ class DatabaseService {
     numPassenger[type] = numPassenger[type] - 1;
     await busCollection.doc(docId).update({"numPassenger" : numPassenger});
     await busCollection.doc(docId).update({"passengerList" : FieldValue.arrayUnion([character])});
+    await busCollection.doc(docId).update({"passengerUidList" : FieldValue.arrayUnion([_user.uid])});
   }
 
   participationMap(String docId, Map<String,dynamic> character) async{
@@ -174,14 +175,20 @@ class DatabaseService {
 
   Stream<QuerySnapshot> getmyParty(){
     if(_mainController.characterList.isNotEmpty)
-      return busCollection.where("passengerList" , arrayContainsAny: _mainController.characterList).snapshots();
+      return busCollection.where("passengerUidList" , arrayContains: _user.uid).snapshots();
+    return null;
+  }
+
+  Stream<QuerySnapshot> getmyParty2(){
+    if(_mainController.characterList.isNotEmpty)
+      return busCollection.where("driverList" , arrayContainsAny: _mainController.characterList).snapshots();
     return null;
   }
 
   Stream<QuerySnapshot> getBusData(String server, {String type, String sort}){
     if(server == "전섭"){
       if(type != null){
-        return busCollection.orderBy('time', descending: false).where("busName", isEqualTo: type).snapshots();
+        return busCollection.orderBy('time', descending: false).where("busName", isEqualTo: type).snapshots(); // 시간순
       }
       return busCollection.orderBy("time", descending: false).snapshots();
     } else {
@@ -226,9 +233,9 @@ class DatabaseService {
       return tradeCollection.snapshots();
     } else {
       if(item != null){
-        return tradeCollection.where("server", isEqualTo: server).where("item", isEqualTo: item).snapshots();
+        return tradeCollection.where("uploader.server", isEqualTo: server).where("item", isEqualTo: item).snapshots();
       }
-      return tradeCollection.where("server", isEqualTo: server).snapshots();
+      return tradeCollection.where("uploader.server", isEqualTo: server).snapshots();
     }
   }
 

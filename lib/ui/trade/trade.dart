@@ -2,9 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
+import 'package:lostarkbus/ui/trade/buyDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:get/get.dart';
 import 'package:lostarkbus/util/lostarkList.dart';
+import 'package:lostarkbus/widget/flushbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../dialog/busCharacterSel.dart';
@@ -24,8 +26,6 @@ class _TradeState extends State<Trade> {
 
   String buyerNick = "구매할 닉네임";
   String quantity = "수량";
-
-  TextEditingController quantityController =TextEditingController();
 
   @override
   void initState(){
@@ -144,7 +144,11 @@ class _TradeState extends State<Trade> {
 
   Widget tradeList(){
     return StreamBuilder<QuerySnapshot>(
-        stream: DatabaseService.instance.getTradeData(server_filter, item: (item_filter == "물품 전체") ? null : item_filter),
+        stream: DatabaseService.instance.getTradeData(
+            server_filter,
+            item: (item_filter == "물품 전체") ? null : item_filter,
+            sort: sort_filter,
+        ),
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if(snapshot.connectionState == ConnectionState.waiting)
             return Expanded(child: Center(child: CircularProgressIndicator(),));
@@ -172,7 +176,7 @@ class _TradeState extends State<Trade> {
 
   Widget tradeContainer(Map<String, dynamic> trade){
     return GestureDetector(
-      onTap: () => Get.dialog(buyDialog(trade["docId"])),
+      onTap: () => Get.dialog(BuyDialog(trade)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
         child: Container(
@@ -212,7 +216,9 @@ class _TradeState extends State<Trade> {
     return Text(text, style: TextStyle(color: Colors.white70),);
   }
 
-  Widget buyDialog(String docId){
+  Widget buyDialog(Map<String, dynamic> trade){
+    TextEditingController quantityController =TextEditingController();
+    int maxQuantity = trade['quantity'] - trade['buy'];
     return AlertDialog(
       backgroundColor: AppColor.mainColor2,
       content: Column(
@@ -228,6 +234,10 @@ class _TradeState extends State<Trade> {
           //   ),
           // ),
           // SizedBox(height: 12,),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Center(child: Text("구매가능 수량 : ${maxQuantity.toString()}", style: TextStyle(color: Colors.white70),)),
+          ),
           Container(
             color: AppColor.mainColor4,
             width: 160,
@@ -256,16 +266,25 @@ class _TradeState extends State<Trade> {
               ),
             ),
           ),
-          SizedBox(height: 12,),
+          SizedBox(height: 15,),
           GestureDetector(
-            onTap: () async{
-              await DatabaseService.instance.buyItem(docId, int.parse(quantityController.text));
-              Get.back();
-            },
+            onTap: (quantityController.text != "") ?
+                () async{
+              if(int.parse(quantityController.text) > maxQuantity){
+                CustomedFlushBar(context, "주문가능한 수량을 확인해주세요");
+              } else {
+                await DatabaseService.instance.buyItem(trade['docId'], int.parse(quantityController.text));
+                quantityController.text = "";
+                Get.back();
+              }
+            } : () => CustomedFlushBar(context, "수량을 입력해주세요."),
             child: Container(
+              decoration: BoxDecoration(
+                color: AppColor.blue3,
+                borderRadius: BorderRadius.circular(6.0)
+              ),
               width: 160,
               height: 50,
-              color: AppColor.mainColor4,
               child: Center(
                 child: Text("구매 신청", style: TextStyle(color: Colors.white70),),
               ),

@@ -160,20 +160,12 @@ class _MapPageState extends State<MapPage> {
           if(snapshot.data.size == 0 || !snapshot.hasData){
             return Center(child: Text("등록된 지도가 없습니다", style: TextStyle(color: Colors.white70),),);
           }
-          List mapList = [];
-          if(snapshot.hasData)
-            for(int i=0; i < snapshot.data.size; i++){
-              mapList.add(snapshot.data.docs[i].data());
-            }
-          if(mapList.length != 0)
-            return GridView.count(
+          List<Padding> mapList = List.generate(snapshot.data.docs.length, (index) {
+            return mapContainer(snapshot.data.docs[index].data());
+          });
+          return GridView.count(
                 crossAxisCount: 2,
-                //childAspectRatio: 1, //item 의 가로 1, 세로 2 의 비율
-                //mainAxisSpacing: 10, //수평 Padding
-                //crossAxisSpacing: 10,
-                children: List.generate(mapList.length, (index){
-                  return mapContainer(mapList[index]);
-                }),
+                children: mapList,
             );
         }
       ),

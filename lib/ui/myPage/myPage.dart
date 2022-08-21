@@ -326,16 +326,11 @@ class _MypageState extends State<Mypage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: DatabaseService.instance.getmyParty(),
               builder: (context, snapshot) {
-                List participation = [];
-                if(!snapshot.hasData)
+                if(!snapshot.hasData || snapshot.data.size == 0)
                   return Container(height: 20, child: Center(child: Text("파티가 없습니다")),);
-                snapshot.data.docs.forEach((e) {
-                  participation.add(e.data());
-                });
-                participation = participation..addAll(_mainController.myUpload);
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
-                    itemCount: participation.length,
+                    itemCount: snapshot.data.docs.length,
                     itemBuilder: (context, index) {
                       return Padding(
                         padding: const EdgeInsets.all(6.0),
@@ -351,7 +346,7 @@ class _MypageState extends State<Mypage> {
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               Text(
-                                participation[index]["busName"],
+                                snapshot.data.docs[index].data()["busName"],
                                 style: TextStyle(
                                   fontSize: 15,
                                   color: AppColor.lightBlue,
@@ -366,7 +361,7 @@ class _MypageState extends State<Mypage> {
                               //   ),
                               // ),
                               Text(
-                                Utils.timeinvert(participation[index]["time"]),
+                                Utils.timeinvert( snapshot.data.docs[index].data()["time"]),
                                 style: TextStyle(
                                   fontSize: 15,
                                   color: Colors.white70,
@@ -379,6 +374,62 @@ class _MypageState extends State<Mypage> {
                       );
                     });
               }
+            ),
+          ),
+          horDivider2(),
+          Container(
+            height: 110,
+            child: StreamBuilder<QuerySnapshot>(
+                stream: DatabaseService.instance.getmyParty2(),
+                builder: (context, snapshot) {
+                  if(!snapshot.hasData)
+                    return Container(height: 20, child: Center(child: Text("파티가 없습니다")),);
+                  return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: snapshot.data.docs.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(6.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8.0),
+                                //border: Border.all(color: Colors.blue),
+                                color: AppColor.mainColor3
+                            ),
+                            height: 110,
+                            width: 120,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Text(
+                                  snapshot.data.docs[index].data()["busName"],
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      color: AppColor.lightBlue,
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                                // Text(
+                                //   participation[index]["busName"],
+                                //   style: TextStyle(
+                                //       fontSize: 15,
+                                //       color: AppColor.lightBlue,
+                                //   ),
+                                // ),
+                                Text(
+                                  Utils.timeinvert(snapshot.data.docs[index].data()["time"]),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+
+                              ],
+                            ),
+                          ),
+                        );
+                      });
+                }
             ),
           ),
         ],
@@ -466,6 +517,19 @@ class _MypageState extends State<Mypage> {
           width: Get.width-40,
           height: 1,
           color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget horDivider2(){
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical:  8.0),
+      child: Center(
+        child: Container(
+          width: Get.width-80,
+          height: 1,
+          color: AppColor.mainColor5,
         ),
       ),
     );

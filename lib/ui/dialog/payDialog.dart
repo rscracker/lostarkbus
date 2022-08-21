@@ -4,6 +4,7 @@ import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/jewelDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:get/get.dart';
+import 'package:lostarkbus/widget/flushbar.dart';
 
 class PayDialog extends StatefulWidget {
   List driverList;
@@ -87,10 +88,10 @@ class _PayDialogState extends State<PayDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
-                    onTap:  (){
+                    onTap:  (receiver != "캐릭터 선택") ? (){
                       DatabaseService.instance.registerPay1(widget.docId, widget.index, receiver);
                       Get.back();
-                    },
+                    } : () => CustomedFlushBar(context, "대금을 받을 캐릭터를 선택해주세요"),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8.0),
@@ -104,14 +105,14 @@ class _PayDialogState extends State<PayDialog> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: (){
+                    onTap: (receiver != "캐릭터 선택") ? (){
                       Get.dialog(JewelDialog(
                         driverList: widget.driverList,
                         docId: widget.docId,
                         index: widget.index,
                         receiver: receiver,
                       ));
-                    },
+                    }: () => CustomedFlushBar(context, "대금을 받을 캐릭터를 선택해주세요"),
                     child: Container(
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8.0),
@@ -133,4 +134,5 @@ class _PayDialogState extends State<PayDialog> {
       ),
     );
   }
+
 }

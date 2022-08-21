@@ -4,6 +4,7 @@ import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/characterSelDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
+import 'package:lostarkbus/widget/flushbar.dart';
 
 class AddMap extends StatefulWidget {
 
@@ -126,9 +127,11 @@ class _AddMapState extends State<AddMap> {
                 );
               } :
               () async{
-                character = await Get.dialog(CharacterSelDialog());
-                setState(() {
-                  character = character;
+                await Get.dialog(CharacterSelDialog()).then((e){
+                  if(e != null)
+                    setState(() {
+                      character = e;
+                    });
                 });
               }
               ,
@@ -255,8 +258,14 @@ class _AddMapState extends State<AddMap> {
       padding: const EdgeInsets.only(top: 10.0),
       child: GestureDetector(
         onTap: () async{
-          await DatabaseService.instance.addMap(character, mapType, loc1, loc2, int.parse(hour) * 100 + int.parse(minute));
-          Get.back();
+          if(character['nick'] != "캐릭터 선택" && hourController.text.length != 0 && minuteController.text.length != 0){
+            await DatabaseService.instance.addMap(character, mapType, loc1, loc2, int.parse(hour) * 100 + int.parse(minute));
+            Get.back();
+          } else if(character['nick'] == "캐릭터 선택"){
+            CustomedFlushBar(context, "캐릭터를 선택해주세요.");
+          } else if(hourController.text.length == 0 || minuteController.text.length == 0){
+            CustomedFlushBar(context, "시간을 입력해주세요");
+          }
         },
         child: Container(
           decoration: BoxDecoration(

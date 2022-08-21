@@ -15,9 +15,11 @@ class BusModel{
   List price2;
   List driverList;
   List passengerList;
+  List passengerUidList;
   int type;
   int numDriver;
   List numPassenger;
+  List applyList;
 
   BusModel({
     this.docId,
@@ -30,9 +32,11 @@ class BusModel{
     this.price2,
     this.driverList,
     this.passengerList,
+    this.passengerUidList,
     this.type, // 0 : 버스등록 1: 기사모집
     this.numDriver,
     this.numPassenger,
+    this.applyList,
   });
 
   static BusModel initBusForm(){
@@ -47,9 +51,11 @@ class BusModel{
       price2: [],
       driverList: [],
       passengerList: [],
+      passengerUidList: [],
       type: 0,
       numDriver: 1,
       numPassenger: [],
+      applyList: [],
     );
   }
 

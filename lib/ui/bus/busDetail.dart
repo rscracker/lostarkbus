@@ -238,14 +238,11 @@ class _BusDetailState extends State<BusDetail> {
             borderRadius: BorderRadius.all(Radius.circular(5.0)),
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Text(
                 text1,
                 style: TextStyle(fontSize: 14, color: Colors.white),
-              ),
-              SizedBox(
-                height: 5,
               ),
               Text(
                 text2,
@@ -253,9 +250,6 @@ class _BusDetailState extends State<BusDetail> {
                     fontSize: 14,
                     color: Colors.white70,
                     overflow: TextOverflow.ellipsis),
-              ),
-              SizedBox(
-                height: 5,
               ),
               payment.length == 0 ? Container() : Text(
                 payment[1] == "우편" ? "우편" : "보석 거래",
