@@ -20,7 +20,7 @@ class Trade extends StatefulWidget {
 
 class _TradeState extends State<Trade> {
 
-  String server_filter = "전섭";
+  String server_filter = "전체 서버";
   String item_filter = "물품";
   String sort_filter = "가격순";
 
@@ -35,7 +35,7 @@ class _TradeState extends State<Trade> {
 
   void getFilter() async{
     final prefs = await SharedPreferences.getInstance();
-    server_filter = prefs.getString('tradeServerFilter') ?? "전섭";
+    server_filter = prefs.getString('tradeServerFilter') ?? "전체 서버";
     item_filter = prefs.getString('itemFilter')?? "물품 전체";
     sort_filter = prefs.getString('tradeSortFilter')?? "가격순";
     setState(() {});
@@ -100,7 +100,7 @@ class _TradeState extends State<Trade> {
   Widget filter(String text, int type) {
     return GestureDetector(
       onTap: (type == 0) ? () async{
-        await Get.dialog(BaseSelectDialog(List.from(["전섭"])..addAll(LostArkList.serverList), save: true, saveKey: "tradeServerFilter",)).then((e){
+        await Get.dialog(BaseSelectDialog(List.from(["전체 서버"])..addAll(LostArkList.serverList), save: true, saveKey: "tradeServerFilter",)).then((e){
           if(e!=null){
             setState(() {
               server_filter = e;
@@ -181,6 +181,10 @@ class _TradeState extends State<Trade> {
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
         child: Container(
           decoration: BoxDecoration(
+            border: Border.all(
+              color: AppColor.mainColor3,
+              width: 1.5
+            ),
             color: AppColor.mainColor4,
             borderRadius: BorderRadius.all(
                 Radius.circular(5.0)

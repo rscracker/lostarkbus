@@ -44,7 +44,8 @@ class _AddBusState extends State<AddBus> {
   //FocusNode myFocus;
 
   bool numCheck = true;
-  bool timeError = false;
+  bool hourError = false;
+  bool minuteError = false;
   bool bossCheck = false;
   bool priceCheck = false;
 
@@ -66,6 +67,7 @@ class _AddBusState extends State<AddBus> {
   @override
   void dispose() {
     //myFocus.dispose();
+    //_busController.dispose();
     // TODO: implement dispose
     super.dispose();
   }
@@ -221,7 +223,7 @@ class _AddBusState extends State<AddBus> {
                 child: Container(
                   //color: Colors.blue,
                   child: Obx(() => Center(
-                      child: Text(_busController.server.length != LostArkList.serverList.length ? _busController.server.toString().replaceAll("[", "").replaceAll("]", "") : "전섭",
+                      child: Text(_busController.server.length != LostArkList.serverList.length ? _busController.server.toString().replaceAll("[", "").replaceAll("]", "") : "전체 서버",
                           style: TextStyle(
                             color: AppColor.mainColor5,
                             fontSize: 15,
@@ -255,13 +257,13 @@ class _AddBusState extends State<AddBus> {
               SizedBox(
                 child: Center(
                     child: Text(
-                  "가디언/군단장",
+                  "버스 종류",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 15,
                   ),
                 )),
-                width: 100,
+                width: 65,
               ),
               GestureDetector(
                 onTap: () async{
@@ -286,7 +288,7 @@ class _AddBusState extends State<AddBus> {
                             fontSize: 15,
                           )))),
                   height: 60,
-                  width: 120,
+                  width: 160,
                 ),
               ),
             ],
@@ -459,7 +461,7 @@ class _AddBusState extends State<AddBus> {
                               if(text == ""){
                                 text = "0";
                               }
-                              _busController.price1.assignAll([{(_busController.server.length != LostArkList.serverList.length ? _busController.myCharacter['server'] : "전섭") : int.parse(text)}]);
+                              _busController.price1.assignAll([{(_busController.server.length != LostArkList.serverList.length ? _busController.myCharacter['server'] : "전체 서버") : int.parse(text)}]);
                             },
                             textAlign: TextAlign.center,
                             cursorColor: AppColor.mainColor5,
@@ -590,7 +592,7 @@ class _AddBusState extends State<AddBus> {
           color: AppColor.mainColor4,
           borderRadius: BorderRadius.all(Radius.circular(8.0)),
           border: Border.all(
-            color: (!timeError) ? Colors.transparent : Colors.redAccent,
+            color: ((hourError == false && minuteError == false)) ? Colors.transparent : Colors.redAccent,
             width: 1,
           )
         ),
@@ -617,15 +619,15 @@ class _AddBusState extends State<AddBus> {
                           color: Colors.white70
                       ),
                       onChanged: (text){
-                        _busController.time += int.parse((text != "") ? text : "0") * 100;
+                        //_busController.time += int.parse((text != "") ? text : "0") * 100;
                         if(int.parse((text != "") ? text : "0") > 24){
-                          CustomedFlushBar(context, "24이하로 입력해주세요");
+                          CustomedFlushBar(context, "24미만으로 입력해주세요");
                           setState(() {
-                            timeError = true;
+                            hourError = true;
                           });
                         } else {
                           setState(() {
-                            timeError = false;
+                            hourError = false;
                           });
                         }
                       },
@@ -670,15 +672,15 @@ class _AddBusState extends State<AddBus> {
                           color: Colors.white70
                       ),
                       onChanged: (text){
-                        _busController.time += int.parse((text != "") ? text : "0");
-                        if(int.parse((text != "") ? text : "0") > 60){
-                          CustomedFlushBar(context, "60이하로 입력해주세요");
+                        //_busController.time += int.parse((text != "") ? text : "0");
+                        if(int.parse((text != "") ? text : "0") >= 60){
+                          CustomedFlushBar(context, "59이하로 입력해주세요");
                           setState(() {
-                            timeError = true;
+                            minuteError = true;
                           });
                         } else {
                           setState(() {
-                            timeError = false;
+                            minuteError = false;
                           });
                         }
                       },
@@ -716,11 +718,14 @@ class _AddBusState extends State<AddBus> {
   Widget registerButton() {
     return GestureDetector(
       onTap: checkValidate() ? () async {
-        if(_busController.numdriver == 1){
-          if(_busController.numdriver == 1 && price2Controller.text != ""){
-            _busController.numPassenger.assignAll([7,1]);
+        _busController.time.value = int.parse(hourController.text) * 100 + int.parse(minuteController.text);
+        if(_busController.numdriver == 1 || _busController.server.length == LostArkList.serverList.length){ // 1인기사 자기섭만 or 전서버인경우
+          if(LostArkList.specificType.contains(_busController.boss.value)){
+            (_busController.price2 != 0) ? _busController.numPassenger.assignAll([7 - _busController.numdriver.value , 1]) : _busController.numPassenger.assignAll([8 - _busController.numdriver.value]);
+          } else if(LostArkList.fourMemType.contains(_busController.boss.value)) {
+            _busController.numPassenger.assignAll([4 - _busController.numdriver.value]);
           } else {
-            _busController.numPassenger.assignAll([7]);
+            _busController.numPassenger.assignAll([8 - _busController.numdriver.value]);
           }
         }
         _busController.updateBusForm();
@@ -924,13 +929,13 @@ class _AddBusState extends State<AddBus> {
             onTap: () {
               _busController.server.assignAll(LostArkList.serverList);
               _busController.price1.assignAll([]);
-              Get.back();
+              Get.back(result: "전체서버");
             },
             child: Container(
               color: AppColor.blue1,
               height: 40,
               width: 150,
-              child: Center(child: Text("전섭",
+              child: Center(child: Text("전체 서버",
                 style: TextStyle(
                   color: Colors.white70
                 ),
@@ -1236,7 +1241,9 @@ class _AddBusState extends State<AddBus> {
 
   bool checkValidate(){
     bool numCheck = _busController.numdriver.value == _busController.driverList.length;
-    bool timeCheck = (hourController.text != "" && minuteController.text != "") ? true : false;
+    bool timeCheck = (hourController.text != "" && minuteController.text != ""
+      && int.parse(hourController.text) < 25 && int.parse(minuteController.text) < 60
+    ) ? true : false;
     bool bossCheck = (_busController.boss.value != "") ? true : false;
     print("num $numCheck");
     print("time $timeCheck");
@@ -1245,7 +1252,5 @@ class _AddBusState extends State<AddBus> {
   }
 
 
-
-
-
+  
 }

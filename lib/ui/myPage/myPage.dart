@@ -6,9 +6,11 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:lostarkbus/controller/mainController.dart';
+import 'package:lostarkbus/model/busModel.dart';
 import 'package:lostarkbus/model/characterModel.dart';
 import 'package:lostarkbus/model/userModel.dart';
 import 'package:lostarkbus/services/database.dart';
+import 'package:lostarkbus/ui/bus/busDetail.dart';
 import 'package:lostarkbus/ui/dialog/addcharacterDialog.dart';
 import 'package:lostarkbus/ui/myPage/addCharacter.dart';
 import 'package:lostarkbus/ui/myPage/test.dart';
@@ -108,15 +110,30 @@ class _MypageState extends State<Mypage> {
   }
 
   void submit(String nick) async{
-    String url = "https://lostark.game.onstove.com/Profile/Character/${searchController.text}";
-    //String url = "https://lostark.game.onstove.com/Profile/Character/동막골호랭이";
-    var response = await http.get(url);
-    String responseBody = utf8.decode(response.bodyBytes);
-    if(response.statusCode == 200){
-      if(responseBody.contains("캐릭터 정보가 없습니다.")){
-        CustomedFlushBar(context, "캐릭터 정보가 없습니다");
-      } else {
-        Get.dialog(characterInfoDialog(responseBody, searchController.text));
+    List nickList = [];
+    if(_mainController.characterList.length != 0){
+      _mainController.characterList.forEach((e) {
+        nickList.add(e['nick']);
+      });
+    }
+    if(_mainController.favoriteList.length != 0){
+      _mainController.favoriteList.forEach((e) {
+        nickList.add(e['nick']);
+      });
+    }
+    if(nickList.contains(nick)){
+      CustomedFlushBar(context, "이미 등록되어있는 캐릭터입니다.");
+      searchController.text = "";
+    } else {
+      String url = "https://lostark.game.onstove.com/Profile/Character/${searchController.text}";
+      var response = await http.get(url);
+      String responseBody = utf8.decode(response.bodyBytes);
+      if(response.statusCode == 200){
+        if(responseBody.contains("캐릭터 정보가 없습니다.")){
+          CustomedFlushBar(context, "캐릭터 정보가 없습니다");
+        } else {
+          Get.dialog(characterInfoDialog(responseBody, searchController.text));
+        }
       }
     }
   }
@@ -201,14 +218,15 @@ class _MypageState extends State<Mypage> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: GestureDetector(
         onTap: (){
-          print(_mainController.characterList.contains(character.toJson()));
-          if(type == 0 && _mainController.characterList.contains(character.toJson())){
-            CustomedFlushBar(context, "이미 등록한 캐릭터입니다.");
-            Get.back();
-          } else {
-            _mainController.addCharacter(character, type);
-            Get.back();
-          }
+            if((type == 0 && _mainController.characterList.length == 10) ||(type == 1 && _mainController.favoriteList.length == 10)){
+              CustomedFlushBar(context, "캐릭터를 더이상 등록할 수 없습니다.");
+              searchController.text = "";
+              Get.back();
+            } else {
+              _mainController.addCharacter(character, type);
+              searchController.text = "";
+              Get.back();
+            }
         },
         child: Container(
           decoration: BoxDecoration(
@@ -259,9 +277,9 @@ class _MypageState extends State<Mypage> {
                       padding: const EdgeInsets.all(6.0),
                       child: Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.0),
-                          //border: Border.all(color: Colors.blue),
-                          color: AppColor.mainColor3
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: AppColor.mainColor3, width: 1.5),
+                            color: AppColor.mainColor4
                         ),
                         height: 110,
                         width: 100,
@@ -332,43 +350,70 @@ class _MypageState extends State<Mypage> {
                   scrollDirection: Axis.horizontal,
                     itemCount: snapshot.data.docs.length,
                     itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.all(6.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8.0),
-                              //border: Border.all(color: Colors.blue),
-                              color: AppColor.mainColor3
-                          ),
-                          height: 110,
-                          width: 120,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Text(
-                                snapshot.data.docs[index].data()["busName"],
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: AppColor.lightBlue,
-                                  fontWeight: FontWeight.bold
+                      BusModel bus = BusModel.fromJson(snapshot.data.docs[index].data());
+                      return GestureDetector(
+                        onTap: () => Get.to(() => BusDetail(bus: bus.toJson(),)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(6.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8.0),
+                                border: Border.all(color: AppColor.mainColor3, width: 1.5),
+                                color: AppColor.mainColor4
+                            ),
+                            height: 110,
+                            width: 120,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Text(
+                                  bus.busName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: AppColor.lightBlue,
+                                    fontWeight: FontWeight.bold
+                                  ),
                                 ),
-                              ),
-                              // Text(
-                              //   participation[index]["busName"],
-                              //   style: TextStyle(
-                              //       fontSize: 15,
-                              //       color: AppColor.lightBlue,
-                              //   ),
-                              // ),
-                              Text(
-                                Utils.timeinvert( snapshot.data.docs[index].data()["time"]),
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.white70,
+                                // Text(
+                                //   bus.passengerList[bus.passengerUidList.indexOf(_user.uid)]['server'],
+                                //   overflow: TextOverflow.ellipsis,
+                                //   style: TextStyle(
+                                //     fontSize: 15,
+                                //     color: Colors.white,
+                                //     //fontWeight: FontWeight.bold
+                                //   ),
+                                // ),
+                                Text(
+                                  bus.passengerList[bus.passengerUidList.indexOf(_user.uid)]['nick'],
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                      //fontWeight: FontWeight.bold
+                                  ),
                                 ),
-                              ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.access_time,
+                                      size: 14,
+                                      color: AppColor.blue4,
+                                    ),
+                                    SizedBox(width: 5,),
+                                    Text(
+                                      Utils.timeinvert(bus.time),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: AppColor.blue4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
 
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -388,43 +433,61 @@ class _MypageState extends State<Mypage> {
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.docs.length,
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(6.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8.0),
-                                //border: Border.all(color: Colors.blue),
-                                color: AppColor.mainColor3
-                            ),
-                            height: 110,
-                            width: 120,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Text(
-                                  snapshot.data.docs[index].data()["busName"],
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      color: AppColor.lightBlue,
-                                      fontWeight: FontWeight.bold
+                        BusModel bus = BusModel.fromJson(snapshot.data.docs[index].data());
+                        return GestureDetector(
+                          onTap: () => Get.to(() => BusDetail(bus: bus.toJson(),)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  border: Border.all(color: AppColor.mainColor3, width: 1.5),
+                                  color: AppColor.mainColor4
+                              ),
+                              height: 110,
+                              width: 120,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Text(
+                                    bus.busName,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        color: AppColor.lightBlue,
+                                        fontWeight: FontWeight.bold
+                                    ),
                                   ),
-                                ),
-                                // Text(
-                                //   participation[index]["busName"],
-                                //   style: TextStyle(
-                                //       fontSize: 15,
-                                //       color: AppColor.lightBlue,
-                                //   ),
-                                // ),
-                                Text(
-                                  Utils.timeinvert(snapshot.data.docs[index].data()["time"]),
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.white70,
+                                  (bus.type == 0) ? Container()
+                                  : Text(
+                                    "지원자 : ${bus.applyList.length.toString()}",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.white,
+                                    ),
                                   ),
-                                ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 14,
+                                        color: AppColor.blue4,
+                                      ),
+                                      SizedBox(width: 5,),
+                                      Text(
+                                        Utils.timeinvert(bus.time),
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: AppColor.blue4,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
 
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -464,8 +527,8 @@ class _MypageState extends State<Mypage> {
       child: Container(
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8.0),
-            //border: Border.all(color: Colors.blue),
-            color: AppColor.mainColor3
+            border: Border.all(color: AppColor.mainColor3, width: 1.5),
+            color: AppColor.mainColor4
         ),
         height: 100,
         width: 100,
@@ -578,7 +641,7 @@ class _MypageState extends State<Mypage> {
             child: Text("고정기사", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold , fontSize: 23),),
           ),
           Container(
-            height: 100,
+            height: 110,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
                 itemCount: _mainController.favoriteList.length,
@@ -588,8 +651,8 @@ class _MypageState extends State<Mypage> {
                     child: Container(
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8.0),
-                          //border: Border.all(color: Colors.blue),
-                          color: AppColor.mainColor3
+                          border: Border.all(color: AppColor.mainColor3, width: 1.5),
+                          color: AppColor.mainColor4
                       ),
                       height: 100,
                       width: 100,

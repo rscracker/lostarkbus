@@ -60,6 +60,10 @@ class _BaseSelectDialogState extends State<BaseSelectDialog> {
       //title: Center(child: Text(widget.title, style: TextStyle(color: Colors.white70),),),
       content: Container(
         width: 200,
+        constraints: BoxConstraints(
+          maxHeight: Get.height * 2 / 3,
+        ),
+        //height: Get.height * 2 / 3,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

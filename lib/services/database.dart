@@ -151,6 +151,10 @@ class DatabaseService {
     await busCollection.doc(docId).update({"passengerUidList" : FieldValue.arrayUnion([_user.uid])});
   }
 
+  applyBus(String docId, Map<dynamic, dynamic> character) async{
+    await busCollection.doc(docId).update({"applyList" : FieldValue.arrayUnion([character])});
+  }
+
   participationMap(String docId, Map<String,dynamic> character) async{
     await mapCollection.doc(docId).update({"participation" : FieldValue.arrayUnion([character])});
   }
@@ -186,7 +190,7 @@ class DatabaseService {
   }
 
   Stream<QuerySnapshot> getBusData(String server, {String type, String sort}){
-    if(server == "전섭"){
+    if(server == "전체 서버"){
       if(type != null){
         return busCollection.orderBy('time', descending: false).where("busName", isEqualTo: type).snapshots(); // 시간순
       }
@@ -204,29 +208,29 @@ class DatabaseService {
   }
 
   Stream<QuerySnapshot> getMapData(String server, String type, String region){
-    if(server == "전섭"){
+    if(server == "전체 서버"){
       if(type != null && region != null){
-        return mapCollection.where("type", isEqualTo: type).where("loc1", isEqualTo: region).snapshots();
+        return mapCollection.where("type", isEqualTo: type).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
       } else if(type != null && region == null){
-        return mapCollection.where("type", isEqualTo: type).snapshots();
+        return mapCollection.where("type", isEqualTo: type).orderBy("time", descending: false).snapshots();
       } else if(type == null && region != null){
-        return mapCollection.where("loc1", isEqualTo: region).snapshots();
+        return mapCollection.where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
       }
       return mapCollection.snapshots();
     } else {
       if(type != null && region != null){
-        return mapCollection.where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).where("loc1", isEqualTo: region).snapshots();
+        return mapCollection.where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
       } else if(type != null && region == null){
-        return mapCollection.where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).snapshots();
+        return mapCollection.where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).orderBy("time", descending: false).snapshots();
       } else if(type == null && region != null){
-        return mapCollection.where("uploader.server", isEqualTo: server).where("loc1", isEqualTo: region).snapshots();
+        return mapCollection.where("uploader.server", isEqualTo: server).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
       }
-      return mapCollection.where("uploader.server", isEqualTo: server).snapshots();
+      return mapCollection.where("uploader.server", isEqualTo: server).orderBy("time", descending: false).snapshots();
     }
   }
 
   Stream<QuerySnapshot> getTradeData(String server, {String item, String sort}){
-    if(server == "전섭"){
+    if(server == "전체 서버"){
       if(item != null){
         return tradeCollection.where("item", isEqualTo: item).snapshots();
       }

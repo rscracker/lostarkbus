@@ -5,6 +5,7 @@ import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/myPage/myPage.dart';
 import 'package:lostarkbus/ui/map/map.dart';
 import 'package:lostarkbus/ui/bus/bus.dart';
+import 'package:lostarkbus/ui/myPage/myPageMenu.dart';
 import 'package:lostarkbus/ui/trade/trade.dart';
 import 'package:lostarkbus/util/colors.dart';
 

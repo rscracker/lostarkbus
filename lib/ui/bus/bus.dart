@@ -9,8 +9,10 @@ import 'package:lostarkbus/model/userModel.dart';
 import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/bus/addBus.dart';
 import 'package:lostarkbus/ui/bus/busDetail.dart';
+import 'package:lostarkbus/ui/bus/recruitDialog.dart';
 import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/busCharacterSel.dart';
+import 'package:lostarkbus/ui/dialog/characterSelDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:lostarkbus/util/lostarkList.dart';
 import 'package:lostarkbus/util/utils.dart';
@@ -28,7 +30,7 @@ class _BusState extends State<Bus> {
 
   UserModel get _user => _mainController.user.value;
 
-  String server_filter = "전섭";
+  String server_filter = "전체 서버";
   String type_filter = "버스 종류";
   String sort_filter = "시간순";
 
@@ -40,7 +42,7 @@ class _BusState extends State<Bus> {
 
   void getFilter() async{
       final prefs = await SharedPreferences.getInstance();
-      server_filter = prefs.getString('serverFilter') ?? "전섭";
+      server_filter = prefs.getString('serverFilter') ?? "전체 서버";
       type_filter = prefs.getString('typeFilter')?? "버스 종류";
       sort_filter = prefs.getString('sortFilter')?? "시간순";
       setState(() {});
@@ -105,7 +107,7 @@ class _BusState extends State<Bus> {
   Widget filter(String text, int type) {
     return GestureDetector(
       onTap: (type == 0) ? () async{
-        await Get.dialog(BaseSelectDialog(List.from(["전섭"])..addAll(LostArkList.serverList), save: true, saveKey: "serverFilter",)).then((e){
+        await Get.dialog(BaseSelectDialog(List.from(["전체 서버"])..addAll(LostArkList.serverList), save: true, saveKey: "serverFilter",)).then((e){
           if(e!=null){
             setState(() {
               server_filter = e;
@@ -172,7 +174,8 @@ class _BusState extends State<Bus> {
                         onTap: () {
                           if((LostArkList.fourMemType.contains(busData.busName))){
                             if(busData.driverList.length + busData.passengerList.length <= 4){
-                              !(data['passengerList'].every((e) => _mainController.characterList.contains(e))) ?
+                              (data['passengerUidList'].length == 0) ? Get.dialog(participationDialog(busData.docId, busData.server)) :
+                              (data['passengerUidList'].contains(_user.uid)) ?
                               Get.to(() => BusDetail(bus: data,)) :
                               Get.dialog(participationDialog(busData.docId, busData.server));
                             } else {
@@ -180,7 +183,8 @@ class _BusState extends State<Bus> {
                             }
                           } else {
                             if(data["driverList"].length + data["passengerList"].length <= 8){
-                              !(data['passengerList'].every((e) => _mainController.characterList.contains(e))) ?
+                              (data['passengerUidList'].length == 0) ? Get.dialog(participationDialog(busData.docId, busData.server)) :
+                              (data['passengerUidList'].contains(_user.uid)) ?
                               Get.to(() => BusDetail(bus: data,)) :
                               Get.dialog(participationDialog(data['docId'], data['server']));
                             } else {
@@ -221,14 +225,21 @@ class _BusState extends State<Bus> {
 
     var price = <Padding>[];
     var numInfo = <Padding>[];
-    for(int i = 0; i < bus["price1"].length; i++){
-      if(bus["numPassenger"][i] != 0){
-        bus["price1"][i].forEach((key, value){
-          price.add(Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(value != 0 ? "$key : ${value}g" : "무료", style: TextStyle(color: AppColor.yellow, fontSize: 13,), overflow: TextOverflow.clip),
-          ));
-        });
+    if(bus['price1'].length == 0){
+      price.add(Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text("무료", style: TextStyle(color: AppColor.yellow, fontSize: 13,), overflow: TextOverflow.clip),
+      ));
+    } else {
+      for(int i = 0; i < bus["price1"].length; i++){
+        if(bus["numPassenger"][i] != 0){
+          bus["price1"][i].forEach((key, value){
+            price.add(Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(value != 0 ? "$key : ${value}g" : "무료", style: TextStyle(color: AppColor.yellow, fontSize: 13,), overflow: TextOverflow.clip),
+            ));
+          });
+        }
       }
     }
     if(bus["price2"].length != 0){
@@ -265,7 +276,8 @@ class _BusState extends State<Bus> {
     // });
     ///Todo GestureDetector
     return GestureDetector(
-      onTap: !(bus['passengerList'].every((e) => _mainController.characterList.contains(e))) ? () => Get.to(() => BusDetail(bus: bus,)) : () => Get.dialog(participationDialog(bus['docId'], bus['server'])),
+      onTap: (bus['passengerUidList'].length ==0) ? () => Get.dialog(participationDialog(bus['docId'], bus['server'])) :
+      (bus['passengerUidList'].contains(_user.uid)) ? () => Get.to(() => BusDetail(bus: bus,)) : () => Get.dialog(participationDialog(bus['docId'], bus['server'])),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
         child: Container(
@@ -344,12 +356,27 @@ class _BusState extends State<Bus> {
       ),
     );
   }
+  bool checkApply(List applyList){
+    for(int i = 0; i < applyList.length; i++){
+      print(applyList[i]['uid']);
+      if(applyList[i]['uid'] == _user.uid){
+        return true;
+      }
+    }
+    return false;
+  }
 
   Widget recruitTile(BusModel bus){
+    bool _checkApply = true;
     return GestureDetector(
-      onTap: (bus.driverList.length < bus.numDriver) ? (){
-
-      } : null,
+      onTap: () async{
+        print(bus.applyList[0]["uid"]);
+        if(checkApply(bus.applyList)){
+          CustomedFlushBar(context, "이미 지원한 파티입니다");
+        } else if(bus.driverList.length < bus.numDriver){
+          Get.dialog(RecruitDialog(bus));
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
         child: Container(
@@ -378,6 +405,7 @@ class _BusState extends State<Bus> {
       ),
     );
   }
+
 
   Widget registerDialog(){
     return AlertDialog(
@@ -468,7 +496,7 @@ class _BusState extends State<Bus> {
         //   width: 150,
         //   child: Padding(
         //     padding: const EdgeInsets.fromLTRB(10,10,8.0,0),
-        //     child: Text((server.length != 0) ? server.toString().replaceAll("[", "").replaceAll("]", "") : "전섭"
+        //     child: Text((server.length != 0) ? server.toString().replaceAll("[", "").replaceAll("]", "") : "전체 서버"
         //         , style: TextStyle(color: AppColor.mainColor5, fontSize: 16, overflow: TextOverflow.ellipsis)),
         //   ),
         // ),
