@@ -728,6 +728,9 @@ class _AddBusState extends State<AddBus> {
             _busController.numPassenger.assignAll([8 - _busController.numdriver.value]);
           }
         }
+        if(priceController.text == ""){
+          _busController.server.assignAll(LostArkList.serverList);
+        }
         _busController.updateBusForm();
         _busController.busForm.uploader = _user.uid;
         await DatabaseService.instance.registerBus(_busController.busForm);

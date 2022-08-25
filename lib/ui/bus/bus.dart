@@ -276,7 +276,7 @@ class _BusState extends State<Bus> {
     // });
     ///Todo GestureDetector
     return GestureDetector(
-      onTap: (bus['passengerUidList'].length ==0) ? () => Get.dialog(participationDialog(bus['docId'], bus['server'])) :
+      onTap: (bus['passengerUidList'].length == 0) ? () => Get.dialog(participationDialog(bus['docId'], bus['server'])) :
       (bus['passengerUidList'].contains(_user.uid)) ? () => Get.to(() => BusDetail(bus: bus,)) : () => Get.dialog(participationDialog(bus['docId'], bus['server'])),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
