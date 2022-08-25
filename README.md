@@ -2,15 +2,17 @@
 
 lostark bus app
 
-## Getting Started
+## Todo
+* 업데이트 대비 설정
+1. 아이템레벨 업데이트(자동 or 수동)
+2. 캐릭터 삭제
+3. 파티 취소
+4. Map => Model
+5. MyPage변경
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Update
+1. App push Notification
+2. 모험의서 파티
