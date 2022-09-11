@@ -13,9 +13,11 @@ import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/bus/busDetail.dart';
 import 'package:lostarkbus/ui/dialog/addcharacterDialog.dart';
 import 'package:lostarkbus/ui/myPage/addCharacter.dart';
+import 'package:lostarkbus/ui/myPage/characterDialog.dart';
 import 'package:lostarkbus/ui/myPage/test.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:lostarkbus/util/utils.dart';
+import 'package:lostarkbus/widget/circularProgress.dart';
 import 'package:lostarkbus/widget/flushbar.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:lostarkbus/ui/dialog/lostarkList.dart';
@@ -42,7 +44,7 @@ class _MypageState extends State<Mypage> {
         child: Column(
           children: <Widget>[
             searchBar(),
-            myCharacter(),
+            Obx(() => myCharacter()),
             horDivider(),
             myParty(),
             horDivider(),
@@ -142,31 +144,33 @@ class _MypageState extends State<Mypage> {
     return FutureBuilder<CharacterModel>(
       future: DatabaseService.instance.getCharacterData(body, nick),
       builder: (context, snapshot) {
-        if(snapshot.data == null || snapshot.connectionState != ConnectionState.done)
-          return Center(child: CircularProgressIndicator(),);
+        if(!snapshot.hasData || snapshot.data == null || snapshot.connectionState != ConnectionState.done)
+          return CustomedCircular();
         return AlertDialog(
           backgroundColor: AppColor.mainColor2,
-          content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10.0),
-                    child: Center(child: Text("캐릭터 정보",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold
-                      ),
-                    ),),
-                  ),
-                  textForm("닉네임", snapshot.data.nick),
-                  textForm("서버", snapshot.data.server),
-                  textForm("레벨", snapshot.data.level.toString()),
-                  textForm("직업", snapshot.data.lostArkClass),
-                  button(0, snapshot.data),
-                  button(1, snapshot.data),
-                ],
-              )
+          content: SingleChildScrollView(
+            child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10.0),
+                      child: Center(child: Text("캐릭터 정보",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),),
+                    ),
+                    textForm("닉네임", snapshot.data.nick),
+                    textForm("서버", snapshot.data.server),
+                    textForm("레벨", snapshot.data.level.toString()),
+                    textForm("직업", snapshot.data.lostArkClass),
+                    button(0, snapshot.data),
+                    button(1, snapshot.data),
+                  ],
+                ),
+          )
         );
       }
     );
@@ -217,15 +221,18 @@ class _MypageState extends State<Mypage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: GestureDetector(
-        onTap: (){
+        onTap: () async{
             if((type == 0 && _mainController.characterList.length == 10) ||(type == 1 && _mainController.favoriteList.length == 10)){
               CustomedFlushBar(context, "캐릭터를 더이상 등록할 수 없습니다.");
               searchController.text = "";
               Get.back();
             } else {
-              _mainController.addCharacter(character, type);
+              Get.dialog(CustomedCircular());
+              await DatabaseService.instance.addCharacter(character, type);
               searchController.text = "";
               Get.back();
+              Get.back();
+              CustomedFlushBar(context, "등록이 완료되었습니다");
             }
         },
         child: Container(
@@ -254,7 +261,7 @@ class _MypageState extends State<Mypage> {
       padding: const EdgeInsets.all(12.0),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(8.0)),
+          borderRadius: BorderRadius.all(Radius.circular(8.0))
           //color: AppColor.mainColor5
         ),
         child: Column(
@@ -275,49 +282,52 @@ class _MypageState extends State<Mypage> {
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.all(6.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(color: AppColor.mainColor3, width: 1.5),
-                            color: AppColor.mainColor4
-                        ),
-                        height: 110,
-                        width: 100,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Text(
-                              _mainController.characterList[index]["server"],
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: AppColor.lightBlue,
-                                fontWeight: FontWeight.bold
+                      child: GestureDetector(
+                        onTap: () => Get.dialog(CharacterDialog(CharacterModel.fromJson(_mainController.characterList[index]), index, 0)),
+                        child: Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.0),
+                              border: Border.all(color: AppColor.mainColor3, width: 1.5),
+                              color: AppColor.mainColor4
+                          ),
+                          height: 110,
+                          width: 100,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Text(
+                                _mainController.characterList[index]["server"],
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColor.lightBlue,
+                                  fontWeight: FontWeight.bold
+                                ),
                               ),
-                            ),
-                            Text(
-                              _mainController.characterList[index]["nick"],
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.white70,
+                              Text(
+                                _mainController.characterList[index]["nick"],
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.white70,
+                                ),
                               ),
-                            ),
-                            Text(
-                              _mainController.characterList[index]["level"].toString(),
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.white70,
+                              Text(
+                                _mainController.characterList[index]["level"].toString(),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.white70,
+                                ),
                               ),
-                            ),
-                            Text(
-                              _mainController.characterList[index]["lostArkClass"],
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.white70,
+                              Text(
+                                _mainController.characterList[index]["lostArkClass"],
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.white70,
+                                ),
                               ),
-                            ),
 
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -433,7 +443,13 @@ class _MypageState extends State<Mypage> {
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.docs.length,
                       itemBuilder: (context, index) {
+                        String nick;
                         BusModel bus = BusModel.fromJson(snapshot.data.docs[index].data());
+                        bus.driverList.forEach((e) {
+                          if(_mainController.uidList.contains(e['characterid'])){
+                            nick = e['nick'];
+                          }
+                        });
                         return GestureDetector(
                           onTap: () => Get.to(() => BusDetail(bus: bus.toJson(),)),
                           child: Padding(
@@ -458,7 +474,15 @@ class _MypageState extends State<Mypage> {
                                         fontWeight: FontWeight.bold
                                     ),
                                   ),
-                                  (bus.type == 0) ? Container()
+                                  (bus.type == 0) ?
+                                  Text(
+                                    "$nick",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                    ),
+                                  )
                                   : Text(
                                     "지원자 : ${bus.applyList.length.toString()}",
                                     overflow: TextOverflow.ellipsis,
@@ -646,51 +670,54 @@ class _MypageState extends State<Mypage> {
               scrollDirection: Axis.horizontal,
                 itemCount: _mainController.favoriteList.length,
                 itemBuilder: (BuildContext context, int index){
-                  return Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.0),
-                          border: Border.all(color: AppColor.mainColor3, width: 1.5),
-                          color: AppColor.mainColor4
-                      ),
-                      height: 100,
-                      width: 100,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Text(
-                            _mainController.favoriteList[index]["server"],
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: AppColor.lightBlue,
-                              fontWeight: FontWeight.bold
+                  return GestureDetector(
+                    onTap: () => Get.dialog(CharacterDialog(CharacterModel.fromJson(_mainController.favoriteList[index]), index, 1)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: AppColor.mainColor3, width: 1.5),
+                            color: AppColor.mainColor4
+                        ),
+                        height: 100,
+                        width: 100,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Text(
+                              _mainController.favoriteList[index]["server"],
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: AppColor.lightBlue,
+                                fontWeight: FontWeight.bold
+                              ),
                             ),
-                          ),
-                          Text(
-                            _mainController.favoriteList[index]["nick"],
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.white70,
+                            Text(
+                              _mainController.favoriteList[index]["nick"],
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.white70,
+                              ),
                             ),
-                          ),
-                          Text(
-                            _mainController.favoriteList[index]["level"].toString(),
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.white70,
+                            Text(
+                              _mainController.favoriteList[index]["level"].toString(),
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.white70,
+                              ),
                             ),
-                          ),
-                          Text(
-                            _mainController.favoriteList[index]["lostArkClass"],
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.white70,
+                            Text(
+                              _mainController.favoriteList[index]["lostArkClass"],
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.white70,
+                              ),
                             ),
-                          ),
 
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   );

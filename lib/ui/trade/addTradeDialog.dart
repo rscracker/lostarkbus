@@ -5,6 +5,8 @@ import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/characterSelDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:lostarkbus/util/lostarkList.dart';
+import 'package:lostarkbus/widget/circularProgress.dart';
+import 'package:lostarkbus/widget/flushbar.dart';
 
 class AddTrade extends StatefulWidget {
 
@@ -250,15 +252,25 @@ class _AddTradeState extends State<AddTrade> {
       padding: const EdgeInsets.only(top: 10.0),
       child: GestureDetector(
         onTap: () async{
-          Map<String, dynamic> form = {
-            "uploader" : character,
-            "item" : tradeItem,
-            "price" : price,
-            "quantity" : quantity,
-            "server" : character['server'],
-          };
-          await DatabaseService.instance.addTrade(character, form);
-          Get.back();
+          if(character['nick'] == "캐릭터 선택"){
+            CustomedFlushBar(context, "캐릭터를 선택해주세요");
+          } else if(priceController.text == ""){
+            CustomedFlushBar(context, "가격을 입력해주세요");
+          } else if(quantityController.text == ""){
+            CustomedFlushBar(context, "수량을 입력해주세요");
+          } else {
+            Map<String, dynamic> form = {
+              "uploader" : character,
+              "item" : tradeItem,
+              "price" : price,
+              "quantity" : quantity,
+              "server" : character['server'],
+            };
+            Get.dialog(CustomedCircular());
+            await DatabaseService.instance.addTrade(character, form);
+            Get.back();
+            Get.back();
+          }
         },
         child: Container(
           decoration: BoxDecoration(

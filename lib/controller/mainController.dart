@@ -11,6 +11,7 @@ class MainController extends GetxController{
   RxList characterList = [].obs;
   RxList myUpload = [].obs;
   RxList nickList = [].obs;
+  RxList uidList = [].obs;
   RxList favoriteList = [].obs;
 
   @override

@@ -5,7 +5,10 @@ import 'package:lostarkbus/util/colors.dart';
 import 'package:get/get.dart';
 import 'package:lostarkbus/util/lostarkList.dart';
 
+// Todo receiver =>  driverList[index][nick]
+
 class JewelDialog extends StatefulWidget {
+
   List driverList;
   String docId;
   int index;
@@ -30,6 +33,7 @@ class _JewelDialogState extends State<JewelDialog> {
 
   @override
   Widget build(BuildContext context) {
+    lostArkClass = widget.driverList[widget.index]['lostArkClass'];
     return AlertDialog(
       backgroundColor: AppColor.mainColor2,
       content: Column(
@@ -84,7 +88,7 @@ class _JewelDialogState extends State<JewelDialog> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: ()=> Get.dialog(BaseSelectDialog(['마탄의 사수', '뙤약볕'])).then((e){
+                  onTap: ()=> Get.dialog(BaseSelectDialog(LostArkList.skill[lostArkClass])).then((e){
                     if(e!= null){
                       setState(() {
                         skill = e;
@@ -174,6 +178,7 @@ class _JewelDialogState extends State<JewelDialog> {
                       price1Controller.text + "/" + price2Controller.text,
                     ];
                     await DatabaseService.instance.registerPay2(widget.docId, widget.index, widget.receiver, jewel);
+                    Get.back();
                     Get.back();
                   },
                   child: Container(

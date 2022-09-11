@@ -151,7 +151,7 @@ class _TradeState extends State<Trade> {
         ),
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if(snapshot.connectionState == ConnectionState.waiting)
-            return Expanded(child: Center(child: CircularProgressIndicator(),));
+            return Expanded(child: Center(child: CircularProgressIndicator(color: Colors.white,),));
           if(snapshot.data.size == 0){
             return Expanded(child: Center(child: Text("등록된 물품이 없습니다", style:  TextStyle(color: Colors.white70),),));
           }
@@ -185,7 +185,7 @@ class _TradeState extends State<Trade> {
               color: AppColor.mainColor3,
               width: 1.5
             ),
-            color: AppColor.mainColor4,
+            color: AppColor.mainColor3.withOpacity(0.3),
             borderRadius: BorderRadius.all(
                 Radius.circular(5.0)
             ),

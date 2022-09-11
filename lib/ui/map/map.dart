@@ -11,6 +11,7 @@ import 'package:lostarkbus/util/colors.dart';
 import 'package:get/get.dart';
 import 'package:lostarkbus/util/lostarkList.dart';
 import 'package:lostarkbus/util/utils.dart';
+import 'package:lostarkbus/widget/circularProgress.dart';
 import 'package:lostarkbus/widget/flushbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -78,6 +79,7 @@ class _MapPageState extends State<MapPage> {
           // ),
           TextButton(
             onPressed: () => Get.dialog(AddMap()),
+            //onPressed: () => Get.dialog(CustomedCircular()),
             child: Text("등록",
               style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
             ),
@@ -121,7 +123,7 @@ class _MapPageState extends State<MapPage> {
           }
         });
       } : () async{
-        await Get.dialog(BaseSelectDialog(['전체(지역)', '파푸니카', '베른 남부'], save: true, saveKey: "regionFilter",)).then((e){
+        await Get.dialog(BaseSelectDialog(LostArkList.region1, save: true, saveKey: "regionFilter",)).then((e){
           if(e!=null){
             setState(() {
               region_filter = e;
@@ -205,11 +207,13 @@ class _MapPageState extends State<MapPage> {
             child: Container(
             decoration: BoxDecoration(
               color: mapData['type'] == "희귀" ? Colors.lightBlue.withOpacity(0.1)
-                  : mapData['type'] == "영웅" ? Colors.purple.withOpacity(0.1) : Colors.yellow.withOpacity(0.1),
+                  : mapData['type'] == "영웅" ? Colors.purple.withOpacity(0.1)
+                  : mapData['type'] == "전설" ? Colors.yellow.withOpacity(0.1) : Colors.deepOrange[800].withOpacity(0.1),
               // color: AppColor.mainColor4,
               border: Border.all(
                   color: mapData['type'] == "희귀" ? AppColor.lightBlue
-                      : mapData['type'] == "영웅" ? AppColor.purple : AppColor.yellow,
+                      : mapData['type'] == "영웅" ? AppColor.purple
+                      : mapData['type'] == "전설" ? AppColor.yellow : Colors.deepOrange[800],
                 // color: AppColor.mainColor5,
                 width: 1.5
               ),
@@ -265,7 +269,8 @@ class _MapPageState extends State<MapPage> {
                     fontWeight: FontWeight.bold,
                     //color: Colors.white
                   color: mapData['type'] == "희귀" ? AppColor.lightBlue
-                      : mapData['type'] == "영웅" ? AppColor.purple : AppColor.yellow,
+                      : mapData['type'] == "영웅" ? AppColor.purple
+                      : mapData['type'] == "전설" ? AppColor.yellow : Colors.deepOrange[800],
                 ),
               )),
             )),

@@ -45,7 +45,7 @@ class _BusState extends State<Bus> {
       server_filter = prefs.getString('serverFilter') ?? "전체 서버";
       type_filter = prefs.getString('typeFilter')?? "버스 종류";
       sort_filter = prefs.getString('sortFilter')?? "시간순";
-      setState(() {});
+      //setState(() {});
   }
 
   @override
@@ -57,8 +57,18 @@ class _BusState extends State<Bus> {
         children: <Widget>[
           title(),
           filterwidget(),
+          divider(),
           busList(),
         ],
+      ),
+    );
+  }
+  Widget divider(){
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Container(
+        height: 1,
+        //color: AppColor.mainColor3,
       ),
     );
   }
@@ -159,9 +169,9 @@ class _BusState extends State<Bus> {
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           List busList = [];
           if(snapshot.connectionState == ConnectionState.waiting)
-            return Center(child: CircularProgressIndicator(),);
-          if(!snapshot.hasData)
-            return Container(child: Center(child: Text("버스가 없습니다")),);
+            return Center(child: CircularProgressIndicator(color: Colors.white,),);
+          if(!snapshot.hasData || snapshot.data.size == 0)
+            return Container(child: Center(child: Text("버스가 없습니다", style: TextStyle(color: Colors.white70, fontSize: 16),)),);
           return Container(
             child: ListView.builder(
                 shrinkWrap: true,
@@ -284,13 +294,13 @@ class _BusState extends State<Bus> {
           //height: 120,
           decoration: BoxDecoration(
             // border: Border.all(
-            //   color: Colors.white,
-            //   width: 1+
+            //   color: Colors.white70,
+            //   width: 1.5
             // ),
             borderRadius: BorderRadius.all(
                 Radius.circular(5.0)
             ),
-            color: AppColor.mainColor4,
+            color: AppColor.blue4.withOpacity(0.1),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -319,7 +329,7 @@ class _BusState extends State<Bus> {
                       child: Row(
                         children: [
                           SizedBox(
-                            width: (Get.width - 190) / 2,
+                            width: (Get.width - 195) / 2,
                             height: 100,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,7 +338,7 @@ class _BusState extends State<Bus> {
                             ),
                           ),
                           SizedBox(
-                            width: (Get.width - 190) / 2,
+                            width: (Get.width - 195) / 2,
                             height: 100,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,10 +366,15 @@ class _BusState extends State<Bus> {
       ),
     );
   }
-  bool checkApply(List applyList){
+  bool checkApply(List applyList, List driverList){
     for(int i = 0; i < applyList.length; i++){
       print(applyList[i]['uid']);
       if(applyList[i]['uid'] == _user.uid){
+        return true;
+      }
+    }
+    for(int i = 0; i < driverList.length; i++){
+      if(driverList[i]['uid'] == _user.uid){
         return true;
       }
     }
@@ -370,9 +385,8 @@ class _BusState extends State<Bus> {
     bool _checkApply = true;
     return GestureDetector(
       onTap: () async{
-        print(bus.applyList[0]["uid"]);
-        if(checkApply(bus.applyList)){
-          CustomedFlushBar(context, "이미 지원한 파티입니다");
+        if(checkApply(bus.applyList, bus.driverList)){
+          Get.to(() => BusDetail(bus : bus.toJson()));
         } else if(bus.driverList.length < bus.numDriver){
           Get.dialog(RecruitDialog(bus));
         }
@@ -386,20 +400,23 @@ class _BusState extends State<Bus> {
             ),
             color: AppColor.mainColor4,
           ),
-          child: Column(
-            children: [
-              tileTop(bus.busName, bus.server, bus.time),
-              Padding(
-                padding: const EdgeInsets.only(top : 8.0),
-                child: Container(height: 1, color: Colors.white70,),
-              ),
-              Container(height: 50,
-                child: Center(
-                  child: Text("기사모집 (${bus.driverList.length.toString()} / ${bus.numDriver.toString()})", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: Column(
+              children: [
+                tileTop(bus.busName, bus.server, bus.time),
+                Padding(
+                  padding: const EdgeInsets.only(top : 8.0),
+                  child: Container(height: 1, color: Colors.white70,),
+                ),
+                Container(height: 50,
+                  child: Center(
+                    child: Text("기사모집 (${bus.driverList.length.toString()} / ${bus.numDriver.toString()})", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                  )
                 )
-              )
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -489,7 +506,7 @@ class _BusState extends State<Bus> {
           width: 200,
           child: Padding(
             padding: const EdgeInsets.only(left : 8.0 , top : 8.0),
-            child: Text(boss, style: TextStyle(color: AppColor.mainColor5 , fontSize: 18, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis,),
+            child: Text(boss, style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis,),
           ),
         ),
         // Container(

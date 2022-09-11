@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lostarkbus/util/colors.dart';
+import 'package:lostarkbus/widget/circularProgress.dart';
 import 'package:lostarkbus/widget/flushbar.dart';
 import 'package:lostarkbus/services/database.dart';
 import 'package:get/get.dart';
@@ -8,6 +10,7 @@ import 'package:get/get.dart';
 class BuyController extends GetxController{
   RxBool error = false.obs;
   RxString errorMessage = "".obs;
+  RxInt maxQuantity = 0.obs;
 
 }
 
@@ -32,7 +35,7 @@ class _BuyDialogState extends State<BuyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    int maxQuantity = widget.trade['quantity'] - widget.trade['buy'];
+    buyController.maxQuantity.value = widget.trade['quantity'] - widget.trade['buy'];
     return AlertDialog(
       backgroundColor: AppColor.mainColor2,
       content: Column(
@@ -48,13 +51,20 @@ class _BuyDialogState extends State<BuyDialog> {
           //   ),
           // ),
           // SizedBox(height: 12,),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Center(
-                child: Text(
-              "구매가능 수량 : ${maxQuantity.toString()}",
-              style: TextStyle(color: Colors.white70),
-            )),
+          StreamBuilder<DocumentSnapshot>(
+            stream: DatabaseService.instance.buyableQuantity(widget.trade['docId']),
+            builder: (context, snapshot) {
+              if(snapshot.hasData)
+                buyController.maxQuantity.value = snapshot.data.data()['quantity'] - snapshot.data.data()['buy'];
+              return Obx(() => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: Center(
+                    child: Text(
+                  "구매가능 수량 : ${buyController.maxQuantity.value.toString()}",
+                  style: TextStyle(color: Colors.white70),
+                )),
+              ));
+            }
           ),
           Container(
             decoration: BoxDecoration(
@@ -75,7 +85,7 @@ class _BuyDialogState extends State<BuyDialog> {
                 if(text == ""){
                   buyController.errorMessage.value = "";
                   buyController.error.value = false;
-                } else if(int.parse(text) > maxQuantity) {
+                } else if(int.parse(text) > buyController.maxQuantity.value) {
                   buyController.error.value = true;
                   buyController.errorMessage.value = "주문가능 수량을 확인해주세요";
                 } else {
@@ -115,9 +125,11 @@ class _BuyDialogState extends State<BuyDialog> {
                     buyController.errorMessage.value = "주문수량을 입력해주세요";
                     buyController.error.value = true;
                   } else {
+                    Get.dialog(CustomedCircular());
                     await DatabaseService.instance.buyItem(
                         widget.trade['docId'],
                         int.parse(quantityController.text));
+                    Get.back();
                     Get.back();
                     Get.dialog(buyInfo(widget.trade['uploader']['nick'],widget.trade['price'], int.parse(quantityController.text)));
                   }
@@ -156,7 +168,7 @@ class _BuyDialogState extends State<BuyDialog> {
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Text("수량 : ${quantity.toString()}", style: TextStyle(color: Colors.white70)),
           ),
-          Text("총 금액 : ${(price * quantity).toString()}", style: TextStyle(color: Colors.white70))
+          Text("총 금액 : ${(price * quantity).toString()}", style: TextStyle(color: AppColor.yellow))
         ],
       ),
     );

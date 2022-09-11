@@ -3,6 +3,13 @@ import 'package:flutter/material.dart';
 class LostArkList {
   LostArkList._();
 
+  static List region1 = ['전체(지역)', '파푸니카', '베른 남부'];
+
+  static Map<String, dynamic> region2 = {
+    "파푸니카" : ["별모래 해변", "티카티카 군락지", "얕은 바닷길", "비밀의 숲"],
+    "베른 남부" : ["벨리온 유적지", "칸다리아 영지"]
+  };
+
   static List serverList = [
     "루페온",
     "아브렐슈드",

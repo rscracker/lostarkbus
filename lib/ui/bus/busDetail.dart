@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lostarkbus/controller/mainController.dart';
+import 'package:lostarkbus/model/busModel.dart';
 import 'package:lostarkbus/model/userModel.dart';
 import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/dialog/payDialog.dart';
@@ -24,15 +25,17 @@ class _BusDetailState extends State<BusDetail> {
 
   MainController _mainController = Get.find();
   UserModel get _user => _mainController.user.value;
+  List driverList = [];
   @override
   Widget build(BuildContext context) {
+    driverList = widget.bus['driverList'];
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              title(widget.bus['partyName'], widget.bus['busName']),
-              driver(),
+              title(widget.bus['driverList'][0]["nick"], widget.bus['busName']),
+              driver(driverList),
               widget.bus['type'] == 0 ? passenger() : apply(),
             ],
           ),
@@ -45,35 +48,37 @@ class _BusDetailState extends State<BusDetail> {
     return Center(
       child: Column(
         children: [
-          TitleText(text1),
+          TitleText("방 제목 : $text1"),
           TitleText(text2),
         ],
       ),
     );
   }
 
-  Widget driver() {
+  Widget driver(List driverList) {
     var column1 = <Padding>[];
     var column2 = <Padding>[];
     for (int i = 0;
         i <
-            ((widget.bus['driverList'].length >= 2)
+            ((driverList.length >= 2)
                 ? 2
-                : widget.bus['driverList'].length);
+                : driverList.length);
         i++) {
-      column1.add(box(widget.bus['driverList'][i]['server'],
-          widget.bus['driverList'][i]['nick'],
-          widget.bus['driverList'][i]['lostArkClass'],
-      widget.bus['driverList'][i]['level'].toString(),)
+      column1.add(box(driverList[i]['server'],
+        driverList[i]['nick'],
+        driverList[i]['lostArkClass'],
+        driverList[i]['characterid'],
+          driverList[i]['level']
+      )
       );
     }
-    if (widget.bus['driverList'].length > 2) {
-      for (int i = 2; i < widget.bus['driverList'].length; i++) {
-        column2.add(box(widget.bus['driverList'][i]['server'],
-            widget.bus['driverList'][i]['nick'],
-            widget.bus['driverList'][i]['lostArkClass'],
-            widget.bus['driverList'][i]['level'].toString(),
-
+    if (driverList.length > 2) {
+      for (int i = 2; i < driverList.length; i++) {
+        column2.add(box(driverList[i]['server'],
+          driverList[i]['nick'],
+          driverList[i]['lostArkClass'],
+          driverList[i]['characterid'],
+            driverList[i]['level']
         ));
       }
     }
@@ -262,15 +267,19 @@ class _BusDetailState extends State<BusDetail> {
     );
   }
 
-  Widget box(String text1, String text2, String text3, String text4) {
+  Widget box(String text1, String text2, String text3, String characterId, int savedLevel) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: new Container(
         height: 100,
         width: 100,
         decoration: BoxDecoration(
-          color: AppColor.blue2,
+          color: AppColor.blue2.withOpacity(0.5),
           borderRadius: BorderRadius.all(Radius.circular(5.0)),
+          border: Border.all(
+            width: 2,
+            color: AppColor.blue3,
+          )
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -293,12 +302,21 @@ class _BusDetailState extends State<BusDetail> {
                   color: Colors.white,
                   overflow: TextOverflow.ellipsis),
             ),
-            Text(
-              text4,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                  overflow: TextOverflow.ellipsis),
+            StreamBuilder<DocumentSnapshot>(
+              stream: DatabaseService.instance.getCharacter(characterId),
+              builder: (context, snapshot) {
+                String level = savedLevel.toString();
+                if(!snapshot.hasData || snapshot.connectionState == ConnectionState.waiting)
+                  return Text("");
+                level = snapshot.data.data() != null ? snapshot.data.data()['level'].toString() : savedLevel.toString();
+                return Text(
+                  level,
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      overflow: TextOverflow.ellipsis),
+                );
+              }
             ),
           ],
         ),
@@ -366,43 +384,90 @@ class _BusDetailState extends State<BusDetail> {
   Widget applicantBox(String text1, String text2, String text3, String text4, int index){
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Container(
-        height: 100,
-        width: 100,
-        decoration: BoxDecoration(
-          color: AppColor.blue2,
-          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+      child: GestureDetector(
+        onTap: () => Get.dialog(acceptDialog(text1, text2, text3, text4, index)),
+        child: Container(
+          height: 100,
+          width: 100,
+          decoration: BoxDecoration(
+            color: AppColor.blue2,
+            borderRadius: BorderRadius.all(Radius.circular(5.0)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Text(
+                text1,
+                style: TextStyle(fontSize: 14, color: Colors.white),
+              ),
+              Text(
+                text2,
+                style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blueAccent,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              Text(
+                text3,
+                style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              Text(
+                text4,
+                style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                    overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Text(
-              text1,
-              style: TextStyle(fontSize: 14, color: Colors.white),
-            ),
-            Text(
-              text2,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.blueAccent,
-                  overflow: TextOverflow.ellipsis),
-            ),
-            Text(
-              text3,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                  overflow: TextOverflow.ellipsis),
-            ),
-            Text(
-              text4,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                  overflow: TextOverflow.ellipsis),
-            ),
-          ],
-        ),
+      ),
+    );
+  }
+
+  Widget acceptDialog(String text1, String text2, String text3, String text4, int index){
+    return AlertDialog(
+      backgroundColor: AppColor.mainColor2,
+      content: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text("${text2}", style: TextStyle(color: Colors.lightBlue, fontSize: 18),),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
+            child: Text("$text1 $text4 $text3", style: TextStyle(color: Colors.white70),),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 15.0),
+            child: Container(height: 1, color: AppColor.mainColor5,),
+          ),
+          Text("지원을 수락하시겠습니까?", style: TextStyle(color: Colors.white),),
+          SizedBox(height: 20,),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton(
+                  onPressed: () async{
+                    Map<String, dynamic> character = widget.bus['applyList'][index];
+                    await DatabaseService.instance.acceptApply(widget.bus['docId'], index, character);
+                    setState(() {
+                      driverList.add(character);
+                    });
+                    Get.back();
+                  },
+                  child: Text("수락")),
+              TextButton(
+                  onPressed: () async{
+                    await DatabaseService.instance.refuseApply(widget.bus['docId'], index);
+                    Get.back();
+                  },
+                  child: Text("거절")),
+            ],
+          )
+        ],
       ),
     );
   }

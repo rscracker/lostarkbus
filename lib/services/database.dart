@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:lostarkbus/controller/mainController.dart';
 import 'package:lostarkbus/model/busModel.dart';
 import 'package:lostarkbus/model/characterModel.dart';
 import 'package:lostarkbus/model/userModel.dart';
 
 import 'package:get/get.dart';
+import 'package:lostarkbus/widget/circularProgress.dart';
+import 'package:lostarkbus/widget/flushbar.dart';
 class DatabaseService {
   DatabaseService._privateConstructor();
 
@@ -30,21 +33,23 @@ class DatabaseService {
 
   final CollectionReference characterCollection = FirebaseFirestore.instance.collection('character');
 
-  getInitData(List myCharacter) async{
+  getInitData(List myCharacter, List myFavorite) async{
     List myParty = [];
     List characterList = [];
-    QuerySnapshot snapshot1 = await busCollection.where("uploader", isEqualTo: _user.uid).get();
-    snapshot1.docs.forEach((e) {
-      myParty.add(e.data());
-    });
-    _mainController.myUpload.assignAll(myParty);
-    print(_mainController.myUpload);
+    List favoriteList = [];
+    _mainController.uidList.assignAll(myCharacter);
     for(int i = 0; i < myCharacter.length ; i++){
       Map<String, dynamic> character;
       await characterCollection.doc(myCharacter[i]).get().then((e) => character = e.data());
       characterList.add(character);
     }
+    for(int i = 0; i < myFavorite.length ; i++){
+      Map<String, dynamic> character;
+      await characterCollection.doc(myFavorite[i]).get().then((e) => character = e.data());
+      favoriteList.add(character);
+    }
     _mainController.characterList.assignAll(characterList);
+    _mainController.favoriteList.assignAll(favoriteList);
   }
 
   Future<bool> setUser(String uid) async{
@@ -63,8 +68,9 @@ class DatabaseService {
       userdata['uid'] = uid;
       _mainController.updateUser(UserModel.fromJson(userdata));
       //_mainController.characterList.assignAll(userdata['characterList']);
-      getInitData(userdata['characterList']);
-      _mainController.favoriteList.assignAll(userdata['favoriteList']);
+      print('aaaa ${userdata['favoriteList']}');
+      getInitData(userdata['characterList'], userdata['favoriteList']);
+      //_mainController.favoriteList.assignAll(userdata['favoriteList']);
       print("second login");
 
       return Future.value(true);
@@ -84,6 +90,33 @@ class DatabaseService {
     return Future.value(characterData);
   }
 
+  updateCharacterLevel(String body, CharacterModel character, int index, int type) async{
+    String updatedLevel = body.split("달성 아이템 레벨</span><span><small>Lv.</small>")[1].substring(0,15).split('<small>')[0].toString().replaceAll(",", "");
+    if(int.parse(updatedLevel) != character.level){
+      if(type == 0){
+        _mainController.characterList[index]['level'] = updatedLevel;
+        _mainController.characterList.refresh();
+        await characterCollection.doc(character.characterid).update({"level" : int.parse(updatedLevel)});
+      } else if (type == 1){
+        _mainController.favoriteList[index]['level'] = updatedLevel;
+        _mainController.favoriteList.refresh();
+        await characterCollection.doc(character.characterid).update({"level" : int.parse(updatedLevel)});
+      }
+    }
+
+  }
+
+  deleteCharacter(String characterId, int index, int type) async{
+    if(type == 0){
+      await userCollection.doc(_user.uid).update({"characterList" : FieldValue.arrayRemove([characterId])});
+      _mainController.characterList.removeAt(index);
+    } else {
+      await userCollection.doc(_user.uid).update({"favoriteList" : FieldValue.arrayRemove([characterId])});
+      _mainController.favoriteList.removeAt(index);
+    }
+    await characterCollection.doc(characterId).delete();
+  }
+
   saveUserData(String uid) async{
     await userCollection.doc(uid).set(_user.toJson());
   }
@@ -95,10 +128,12 @@ class DatabaseService {
     character.uid = _user.uid;
     await characterCollection.doc(id).update(character.toJson());
     if(type == 0){
+      _mainController.characterList.add(character.toJson());
       _user.characterList.add(id);
       await userCollection.doc(_user.uid).update({"characterList" : _user.characterList});
     } else{
-      _user.favoriteList.add(character.toJson());
+      _user.favoriteList.add(id);
+      _mainController.favoriteList.add(character.toJson());
       await userCollection.doc(_user.uid).update({"favoriteList" : _user.favoriteList});
     }
   }
@@ -118,7 +153,7 @@ class DatabaseService {
     await busCollection.add({}).then((e) => id = e.id);
     busForm.docId = id;
     await busCollection.doc(id).set(busForm.toJson());
-    _mainController.myUpload.add(busForm.toJson());
+    //_mainController.myUpload.add(busForm.toJson());
   }
 
   registerPay1(String docId, int index, String receiver) async{
@@ -155,6 +190,32 @@ class DatabaseService {
     await busCollection.doc(docId).update({"applyList" : FieldValue.arrayUnion([character])});
   }
 
+  acceptApply(String docId, int index, Map<dynamic, dynamic> character) async{
+    List applyList = [];
+    bool numCheck = false;
+    await busCollection.doc(docId).get().then((e){
+      applyList = e.data()["applyList"];
+      if(e.data()['numDriver'] - 1 == e.data()['driverList'].length){
+        numCheck = true;
+      }
+    });
+    applyList.removeAt(index);
+    await busCollection.doc(docId).update({"applyList" : applyList});
+    await busCollection.doc(docId).update({"driverList" : FieldValue.arrayUnion([character])});
+    if(numCheck){
+      await busCollection.doc(docId).update({"type" : 0});
+    }
+  }
+
+  refuseApply(String docId, int index) async{
+    List applyList = [];
+    await busCollection.doc(docId).get().then((e){
+      applyList = e.data()["applyList"];
+    });
+    applyList.removeAt(index);
+    await busCollection.doc(docId).update({"applyList" : applyList});
+  }
+
   participationMap(String docId, Map<String,dynamic> character) async{
     await mapCollection.doc(docId).update({"participation" : FieldValue.arrayUnion([character])});
   }
@@ -185,21 +246,24 @@ class DatabaseService {
 
   Stream<QuerySnapshot> getmyParty2(){
     if(_mainController.characterList.isNotEmpty)
-      return busCollection.where("driverList" , arrayContainsAny: _mainController.characterList).snapshots();
+      return busCollection.where("driverList" , arrayContainsAny: _mainController.characterList).orderBy('time', descending: false).snapshots();
     return null;
   }
 
   Stream<QuerySnapshot> getBusData(String server, {String type, String sort}){
+    int time = DateTime.now().hour * 100 + DateTime.now().minute;
+    print('hour : ${DateTime.now().hour}');
+    print(time);
     if(server == "전체 서버"){
       if(type != null){
-        return busCollection.orderBy('time', descending: false).where("busName", isEqualTo: type).snapshots(); // 시간순
+        return busCollection.where("time" , isGreaterThan: time).orderBy('time', descending: false).where("busName", isEqualTo: type).snapshots(); // 시간순
       }
-      return busCollection.orderBy("time", descending: false).snapshots();
+      return busCollection.where("time" , isGreaterThan: time).orderBy("time", descending: false).snapshots();
     } else {
       if(type != null){
-        return busCollection.orderBy('time', descending: false).where("server", arrayContains: server).where("busName", isEqualTo: type).snapshots();
+        return busCollection.where("time" , isGreaterThan: time).orderBy('time', descending: false).where("server", arrayContains: server).where("busName", isEqualTo: type).snapshots();
       }
-      return busCollection.orderBy("time", descending: false).where("server", arrayContains: server).snapshots();
+      return busCollection.where("time" , isGreaterThan: time).orderBy("time", descending: false).where("server", arrayContains: server).snapshots();
     }
   }
 
@@ -208,24 +272,25 @@ class DatabaseService {
   }
 
   Stream<QuerySnapshot> getMapData(String server, String type, String region){
+    int time = DateTime.now().hour * 100 + DateTime.now().minute;
     if(server == "전체 서버"){
       if(type != null && region != null){
-        return mapCollection.where("type", isEqualTo: type).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
+        return mapCollection.where("time", isGreaterThan: time).where("type", isEqualTo: type).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
       } else if(type != null && region == null){
-        return mapCollection.where("type", isEqualTo: type).orderBy("time", descending: false).snapshots();
+        return mapCollection.where("time", isGreaterThan: time).where("type", isEqualTo: type).orderBy("time", descending: false).snapshots();
       } else if(type == null && region != null){
-        return mapCollection.where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
+        return mapCollection.where("time", isGreaterThan: time).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
       }
-      return mapCollection.snapshots();
+      return mapCollection.where("time", isGreaterThan: time).snapshots();
     } else {
       if(type != null && region != null){
-        return mapCollection.where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
+        return mapCollection.where("time", isGreaterThan: time).where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
       } else if(type != null && region == null){
-        return mapCollection.where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).orderBy("time", descending: false).snapshots();
+        return mapCollection.where("time", isGreaterThan: time).where("uploader.server", isEqualTo: server).where("type", isEqualTo: type).orderBy("time", descending: false).snapshots();
       } else if(type == null && region != null){
-        return mapCollection.where("uploader.server", isEqualTo: server).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
+        return mapCollection.where("time", isGreaterThan: time).where("uploader.server", isEqualTo: server).where("loc1", isEqualTo: region).orderBy("time", descending: false).snapshots();
       }
-      return mapCollection.where("uploader.server", isEqualTo: server).orderBy("time", descending: false).snapshots();
+      return mapCollection.where("time", isGreaterThan: time).where("uploader.server", isEqualTo: server).orderBy("time", descending: false).snapshots();
     }
   }
 
@@ -241,6 +306,15 @@ class DatabaseService {
       }
       return tradeCollection.where("uploader.server", isEqualTo: server).snapshots();
     }
+  }
+
+  Stream<DocumentSnapshot> getCharacter(String characterId){
+    return characterCollection.doc(characterId).snapshots();
+  }
+
+
+  Stream<DocumentSnapshot> buyableQuantity(String docId){
+    return tradeCollection.doc(docId).snapshots();
   }
 
 

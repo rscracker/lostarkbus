@@ -33,6 +33,7 @@ class _PayDialogState extends State<PayDialog> {
 
   @override
   Widget build(BuildContext context) {
+    receiver = widget.driverList[0]['nick'];
     return AlertDialog(
       backgroundColor: AppColor.mainColor2,
       content: Column(

@@ -4,6 +4,7 @@ import 'package:lostarkbus/services/database.dart';
 import 'package:lostarkbus/ui/dialog/baseSelectDialog.dart';
 import 'package:lostarkbus/ui/dialog/characterSelDialog.dart';
 import 'package:lostarkbus/util/colors.dart';
+import 'package:lostarkbus/util/lostarkList.dart';
 import 'package:lostarkbus/widget/flushbar.dart';
 
 class AddMap extends StatefulWidget {
@@ -24,6 +25,9 @@ class _AddMapState extends State<AddMap> {
   String hour = "00";
   String minute = "00";
 
+  bool hourError = false;
+  bool minuteError = false;
+
   final GlobalKey<FormState> hourKey = GlobalKey<FormState>();
   final TextEditingController hourController = TextEditingController();
 
@@ -34,16 +38,19 @@ class _AddMapState extends State<AddMap> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppColor.mainColor2,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          form("캐릭터", 0),
-          form("종류", 1),
-          form("지역", 2),
-          timeSelect(),
-          button()
-        ],
+      content: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            form("캐릭터", 0),
+            form("종류", 1),
+            form("지역", 2),
+            timeSelect(),
+            button()
+          ],
+        ),
       ),
     );
   }
@@ -75,10 +82,17 @@ class _AddMapState extends State<AddMap> {
                 GestureDetector(
                   onTap: () async{
                     await(Get.dialog(BaseSelectDialog(['파푸니카', '베른 남부']))).then((e) {
-                      if(e != null)
+                      if(e != null && e == "파푸니카"){
                         setState(() {
                           loc1 = e;
+                          loc2 = LostArkList.region2['파푸니카'][0];
                         });
+                      } else {
+                        setState(() {
+                          loc1 = e;
+                          loc2 = LostArkList.region2['베른 남부'][0];
+                        });
+                      }
                     });
                   },
                   child: Container(
@@ -96,8 +110,8 @@ class _AddMapState extends State<AddMap> {
                   onTap: () async{
                     await(Get.dialog(BaseSelectDialog(
                         (loc1 == "파푸니카") ?
-                        ['별모래 해변', '티카티카 군락지', '얕은 바닷길'] :
-                        ['벨리온 유적지', '칸다리아 영지']
+                        LostArkList.region2['파푸니카'] :
+                        LostArkList.region2['베른 남부']
                     ))).then((e) {
                       if(e != null)
                         setState(() {
@@ -118,7 +132,7 @@ class _AddMapState extends State<AddMap> {
             GestureDetector(
               onTap: (type == 1) ?
               () async{
-                await Get.dialog(BaseSelectDialog(["희귀", "영웅", "전설"])).then((e){
+                await Get.dialog(BaseSelectDialog(["희귀", "영웅", "전설", "유물"])).then((e){
                   if(e != null)
                     setState(() {
                       mapType = e;
@@ -142,7 +156,10 @@ class _AddMapState extends State<AddMap> {
                   style: TextStyle(color: Colors.white),
                 )) : Center(child: Text(mapType,
                   style : TextStyle(color:
-                    mapType == "희귀" ? Colors.blue : mapType == "영웅" ? Colors.purple : AppColor.lightYellow,),
+                    mapType == "희귀" ? Colors.blue
+                        : mapType == "영웅" ? Colors.purple
+                        : mapType == "전설" ? AppColor.lightYellow
+                        : Colors.deepOrange[800],),
                 )),
               ),
             )
@@ -161,6 +178,10 @@ class _AddMapState extends State<AddMap> {
         decoration: BoxDecoration(
           color: AppColor.mainColor4,
           borderRadius: BorderRadius.all(Radius.circular(8.0)),
+          border: Border.all(
+            color: (hourError || minuteError) ? Colors.red : Colors.transparent,
+            width: 1
+          )
         ),
         child: Padding(
           padding: const EdgeInsets.only(left: 12.0),
@@ -186,8 +207,18 @@ class _AddMapState extends State<AddMap> {
                           color: Colors.white70
                       ),
                       onChanged: (text){
+                        if(int.parse(hourController.text == "" ? "0" : hourController.text) > 23){
+                          setState(() {
+                            hourError = true;
+                          });
+                        } else {
+                          setState(() {
+                            hourError = false;
+                          });
+                        }
                         hour = text;
                       },
+                      keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
                       cursorColor: AppColor.mainColor5,
                       controller: hourController,
@@ -221,8 +252,18 @@ class _AddMapState extends State<AddMap> {
                           color: Colors.white70
                       ),
                       onChanged: (text){
+                        if(int.parse(minuteController.text == "" ? "0" : minuteController.text) > 59){
+                          setState(() {
+                            minuteError = true;
+                          });
+                        } else {
+                          setState(() {
+                            minuteError = false;
+                          });
+                        }
                         minute = text;
                       },
+                      keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
                       cursorColor: AppColor.mainColor5,
                       controller: minuteController,
@@ -258,7 +299,9 @@ class _AddMapState extends State<AddMap> {
       padding: const EdgeInsets.only(top: 10.0),
       child: GestureDetector(
         onTap: () async{
-          if(character['nick'] != "캐릭터 선택" && hourController.text.length != 0 && minuteController.text.length != 0){
+          if(character['nick'] != "캐릭터 선택" && hourController.text.length != 0 && minuteController.text.length != 0
+            && !hourError && !minuteError
+          ){
             await DatabaseService.instance.addMap(character, mapType, loc1, loc2, int.parse(hour) * 100 + int.parse(minute));
             Get.back();
           } else if(character['nick'] == "캐릭터 선택"){

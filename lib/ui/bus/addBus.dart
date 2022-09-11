@@ -12,6 +12,7 @@ import 'package:lostarkbus/ui/dialog/typeSelDialog.dart';
 import 'package:lostarkbus/ui/navigation.dart';
 import 'package:lostarkbus/util/colors.dart';
 import 'package:lostarkbus/util/lostarkList.dart';
+import 'package:lostarkbus/widget/circularProgress.dart';
 import 'package:lostarkbus/widget/flushbar.dart';
 
 class AddBus extends StatefulWidget {
@@ -326,8 +327,12 @@ class _AddBusState extends State<AddBus> {
                     width: 50,
                   ),
                   GestureDetector(
-                      onTap: () {
-                        Get.dialog(busNumDialog());
+                      onTap: () async{
+                        await Get.dialog(BaseSelectDialog(["1인", "2인", "3인", "4인"])).then((e){
+                          if(e != null){
+                            _busController.numdriver.value = int.parse(e[0]);
+                          }
+                        });
                       },
                       child: SizedBox(
                         child: Center(
@@ -421,7 +426,7 @@ class _AddBusState extends State<AddBus> {
       padding: const EdgeInsets.only(top: 15.0, left: 15),
       child: Container(
         height: 60 * (_busController.price1.length == 0 ? 1 : _busController.price1.length).toDouble(),
-        width: (LostArkList.specificType.contains(_busController.boss.value)) ? 250 : 150,
+        width: (LostArkList.specificType.contains(_busController.boss.value) || (_busController.price1.length != 0 && _busController.server.length != 1)) ? 250 : 150,
         decoration: BoxDecoration(
           color: AppColor.mainColor4,
           borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -441,9 +446,9 @@ class _AddBusState extends State<AddBus> {
                 )),
                 width: 50,
               ),
-              (_busController.price1.length == 1 || _busController.price1.length == 0) ?
+              (_busController.price1.length == 1 || _busController.price1.length == 0 || _busController.server.length == 1) ?
               Obx(() => GestureDetector(
-                onTap: () => (_busController.numdriver.value == 1 || _busController.price1.length == 0) ? null : Get.dialog(priceSetDialog(0)) ,
+                onTap: () => (_busController.numdriver.value == 1 || _busController.price1.length == 0 || _busController.server.length == 1) ? null : Get.dialog(priceSetDialog(0)) ,
                 child: Row(
                   children: [
                     SizedBox(
@@ -451,7 +456,7 @@ class _AddBusState extends State<AddBus> {
                       child: Form(
                           key: priceKey,
                           child: TextFormField(
-                            enabled: _busController.numdriver.value == 1 || _busController.server.length == LostArkList.serverList.length,
+                            enabled: _busController.numdriver.value == 1 || _busController.server.length == LostArkList.serverList.length || _busController.server.length == 1,
                             maxLength: 6,
                             keyboardType: TextInputType.number,
                             style: TextStyle(
@@ -532,7 +537,7 @@ class _AddBusState extends State<AddBus> {
                   ],
 
                 ),
-              )) : Obx( () => price2()),
+              )) : Obx(() => price2()),
             ],
           ),
         ),
@@ -551,12 +556,12 @@ class _AddBusState extends State<AddBus> {
         ));
       });
     }
-    if(_busController.price2 != 0){
+    if(_busController.price2 != 0 && LostArkList.specificType.contains(_busController.boss.value)){
       column.add(Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Text("독식 : ${_busController.price2.value.toString()}g", style: TextStyle(color: AppColor.dark_pink),),
       ));
-    } else {
+    } else if(_busController.price2 == 0 && LostArkList.specificType.contains(_busController.boss.value)){
       column.add(Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Text("자율", style: TextStyle(color: AppColor.dark_pink),),
@@ -564,7 +569,7 @@ class _AddBusState extends State<AddBus> {
     }
     return Container(
       height: 60 * (_busController.price1.length + ((_busController.price2.value != 0) ? 1 : 0)).toDouble(),
-      width: 150,
+      width: 160,
       decoration: BoxDecoration(
         color: AppColor.mainColor4,
         borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -718,10 +723,11 @@ class _AddBusState extends State<AddBus> {
   Widget registerButton() {
     return GestureDetector(
       onTap: checkValidate() ? () async {
+        Get.dialog(CustomedCircular());
         _busController.time.value = int.parse(hourController.text) * 100 + int.parse(minuteController.text);
         if(_busController.numdriver == 1 || _busController.server.length == LostArkList.serverList.length){ // 1인기사 자기섭만 or 전서버인경우
           if(LostArkList.specificType.contains(_busController.boss.value)){
-            (_busController.price2 != 0) ? _busController.numPassenger.assignAll([7 - _busController.numdriver.value , 1]) : _busController.numPassenger.assignAll([8 - _busController.numdriver.value]);
+            (_busController.price2 != 0) ? _busController.numPassenger.assignAll([((LostArkList.fourMemType.contains(_busController.boss.value) ? 3 : 7) - _busController.numdriver.value) , 1]) : _busController.numPassenger.assignAll([((LostArkList.fourMemType.contains(_busController.boss.value) ? 4 : 8) - _busController.numdriver.value)]);
           } else if(LostArkList.fourMemType.contains(_busController.boss.value)) {
             _busController.numPassenger.assignAll([4 - _busController.numdriver.value]);
           } else {
@@ -735,6 +741,7 @@ class _AddBusState extends State<AddBus> {
         _busController.busForm.uploader = _user.uid;
         await DatabaseService.instance.registerBus(_busController.busForm);
         _busController.dispose();
+        Get.back();
         Get.back();
       } : () => CustomedFlushBar(context, "모두 입력해 주세요"),
       child: Container(
@@ -877,46 +884,48 @@ class _AddBusState extends State<AddBus> {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () => Get.dialog(AddCharacterDialog(1)),
-            child: Container(
-              decoration: BoxDecoration(
-                  color: AppColor.blue3,
-                borderRadius: BorderRadius.all(Radius.circular(8.0))
-              ),
-              height: 40,
-              width: 200,
-              child: Center(child: Text("기사 추가",
-                style: TextStyle(color: Colors.white70),
-              )),
-            ),
-          ),
+          // GestureDetector(
+          //   onTap: () => Get.dialog(AddCharacterDialog(1)),
+          //   child: Container(
+          //     decoration: BoxDecoration(
+          //         color: AppColor.blue3,
+          //       borderRadius: BorderRadius.all(Radius.circular(8.0))
+          //     ),
+          //     height: 40,
+          //     width: 200,
+          //     child: Center(child: Text("기사 추가",
+          //       style: TextStyle(color: Colors.white70),
+          //     )),
+          //   ),
+          // ),
           SizedBox(
             height: 6,
           ),
-          InkWell(
+          Obx(() => InkWell(
             onTap: (_busController.driverList.length < _busController.numdriver.value) ? () async{
-              if(hourController.text != "" && minuteController.text != "" && _busController.boss != ""){
+              if(hourController.text != "" && minuteController.text != "" && _busController.boss != "" && !hourError && !minuteError){
                 _busController.busForm.type = 1;
+                _busController.time.value = int.parse(hourController.text) * 100 + int.parse(minuteController.text);
                 _busController.updateBusForm();
+                Get.dialog(CustomedCircular());
                 await DatabaseService.instance.registerBus(_busController.busForm);
                 Get.offAll(Navigation());
               } else {
                 CustomedFlushBar(context, "시간/버스 종류를 입력해주세요");
               }
-            } : null,
+            } : () => CustomedFlushBar(context, "인원을 확인해주세요"),
             child: Container(
               decoration: BoxDecoration(
                   color: AppColor.blue3,
                   borderRadius: BorderRadius.all(Radius.circular(8.0))
               ),
-              height: 40,
+              height: 50,
               width: 200,
               child: Center(child: Text("기사 모집",
                 style: TextStyle(color: Colors.white70),
               )),
             ),
-          ),
+          ),)
         ],
       ),
     );

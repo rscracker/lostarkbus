@@ -38,7 +38,7 @@ class Navigation extends StatelessWidget {
 
   final List inactiveIcons = [Icons.favorite, Icons.group, Icons.notifications];
 
-  final List<Widget> _page = <Widget>[Bus(), Trade(), MapPage(), Mypage()];
+  final List<Widget> _page = <Widget>[Bus(), Trade(), MapPage(), MyPageMenu()];
 
   GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
 

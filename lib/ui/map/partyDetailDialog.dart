@@ -29,10 +29,17 @@ class _PartyDetailDialogState extends State<PartyDetailDialog> {
               child: Column(
                 children: [
                   //Text(widget.map["type"], style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),),
-                  Text("${widget.map["loc1"]} ${widget.map["loc2"]}", style: TextStyle(fontSize: 20,
+                  Text("${widget.map["loc1"]}", style: TextStyle(fontSize: 20,
                       color: widget.map['type'] == "희귀" ? AppColor.lightBlue
-                          : widget.map['type'] == "영웅" ? AppColor.purple : AppColor.yellow,
+                          : widget.map['type'] == "영웅" ? AppColor.purple
+                          : widget.map['type'] == "전설" ? AppColor.yellow: Colors.deepOrange[800],
                       fontWeight: FontWeight.bold),),
+                  SizedBox(height: 5,),
+                  Text("${widget.map["loc2"]}", style: TextStyle(fontSize: 20,
+                      color: widget.map['type'] == "희귀" ? AppColor.lightBlue
+                          : widget.map['type'] == "영웅" ? AppColor.purple
+                          : widget.map['type'] == "전설" ? AppColor.yellow: Colors.deepOrange[800],
+                      fontWeight: FontWeight.bold),)
                 ],
               ),
             ),
